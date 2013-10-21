@@ -1,9 +1,11 @@
-function Partial_Render(){
+function Partial_Render(settings){
 	this.data = null
 	this.partial = null
 	this.center = null
-	this.radius = DEFAULT_RADIUS
+	this.settings = settings
+	this.radius = this.settings.center_radius 
 	this.context = null
+	this.visible = true
 	this.generate_center= function(){
 		if(this.partial == null)	
 			return null
@@ -28,7 +30,7 @@ function Partial_Render(){
 			if(grandparent == null){
 				//first generation, default normal line is horizontal.
 				parent_vector = new Point(-1,0)
-				_new_base_center = new Point(-DEFAULT_DIST,0)
+				_new_base_center = new Point(-this.settings.center_line_length,0)
 			}
 			else{
 				parent_vector= grandparent.minus(parent)
@@ -66,6 +68,8 @@ function Partial_Render(){
 
 	}
 	this.render= function(context){
+		if(this.visible==false)
+			return
 		var image= new Image()
 		image.src = this.data.image
 		var render_partial = this

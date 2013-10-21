@@ -47,7 +47,7 @@ test_data =  {
 				}
 			]
 		},
-		/*{
+		{
 			 name:"lorem3",
 			 text:"lorem3",
 			 image:"huaban.com/0884221e6f3bee813075614b1774543ec7f0c284.jpg"
@@ -67,7 +67,7 @@ test_data =  {
 			text:"lorem6",
 			image:"huaban.com/49f6f5c8a4a88c0428115eaaa9693ca34c8b234b.jpg"
 		},
-		{
+		/*{
 			name:"lorem7",
 			text:"lorem7",
 			image:"huaban.com/e34ca009b37f561249d36a61a5a35a2ea57f77cf.jpg"
@@ -128,6 +128,7 @@ function OrgChart(settings){
 		this.hierarchy=1
 	this.wh = this.width/this.height
 	this.data = test_data
+	this.settings=settings
 	this.center_radius = settings.center_radius
 	this.center_line_length = settings.center_line_length
 	this.root = new Partial()

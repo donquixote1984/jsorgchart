@@ -19,16 +19,20 @@ function Partial(){
 	this.partial_render= null
 	this.context = null
 	this.hierachy = 0
-	this.settins
+	this.settings = null
 	this.toString = function(){
 		return "name: "+this.name + "center: "+this.center.x+" , "+this.center.y+ ", parent "+this.parent
 	}	
 	this.generate_render = function(){
-		var p  = new Partial_Render()
+		var p  = new Partial_Render(this.settings)
+		if(this.hierachy>this.settings.hierarchy)
+			p.visible = false
+		p.radius = this.settings.center_radius
 		p.data= this.data
 		if(this.parent!=null){
 			p.radius =this.parent.partial_render.radius*RADIUS_GRADIENT_RATE
 		}
+
 		p.partial = this
 		this.partial_render = p
 		p.generate_center()
@@ -41,7 +45,9 @@ function Partial(){
 		this.partial_render.render(context)
 		for(var i =0;i<this.children.length;i++){
 			this.children[i].render(context)
-			drawLine(this.partial_render.center,this.children[i].partial_render.center,context)
+			if(this.children[i].partial_render.visible){
+				drawLine(this.partial_render.center,this.children[i].partial_render.center,context)
+			}
 		}
 
 	}
@@ -57,15 +63,17 @@ function Partial(){
 		this.text = data.text
 		this.name = data.name
 		this.text = data.text
+
 		//p.context = this.context
 		//p.index = index
 		if(data.children!=null)	{
 			for(var i=0;i<data.children.length;i++){
 				 var partial = new Partial()
-				 partial.parseData(data.children[i])
+				 partial.settings=this.settings
+				 partial.hierachy =this.hierachy+1
 				 partial.index=  i
 				 partial.parent = this
-				 partial.hierachy +=this.hierachy
+				 partial.parseData(data.children[i])
 				 this.children.push(partial)
 			}
 		}
