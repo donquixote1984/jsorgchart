@@ -1,0 +1,32 @@
+<html>
+	<head>
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript" src="point.js"></script>
+		<script type="text/javascript" src="partial.js"></script>
+		<script type="text/javascript" src="partial_render.js"></script>
+		<script type="text/javascript" src="org.js"></script>
+	</head>
+	<script>
+		$(function(){
+			canvas= document.getElementById("mycanvas")
+			context = canvas.getContext("2d")
+			context.rect(0,0,1000,1000)
+			context.translate(500,500)
+			settings ={}
+			settings.width=900
+			settings.height=600
+			settings.hierarchy=2
+			settings.center_radius = 40
+			settings.center_line_length=150
+			settings.context=context
+			settings.page_size=10
+			chart= new OrgChart(settings)
+			chart.init()
+			chart.render()
+
+		})
+	</script>
+	<body>
+		<canvas id = "mycanvas" width="1000px" height="1000px" style="margin:0 auto;display:block;border:1px solid #aeaeae"></canvas>
+	</body>
+</html>
