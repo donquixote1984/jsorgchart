@@ -1,10 +1,12 @@
 <html>
 	<head>
-		<script type="text/javascript" src="jquery.js"></script>
-		<script type="text/javascript" src="point.js"></script>
-		<script type="text/javascript" src="partial.js"></script>
-		<script type="text/javascript" src="partial_render.js"></script>
-		<script type="text/javascript" src="org.js"></script>
+		<script type="text/javascript" src="static/jquery.js"></script>
+		<script type="text/javascript" src="static/point.js"></script>
+		<script type="text/javascript" src="static/pagination_effect_vendor.js"></script>
+		<script type="text/javascript" src="static/element.js"></script>
+		<script type="text/javascript" src="static/partial.js"></script>
+		<script type="text/javascript" src="static/partial_render.js"></script>
+		<script type="text/javascript" src="static/org.js"></script>
 	</head>
 	<script>
 		$(function(){
@@ -15,15 +17,17 @@
 			settings ={}
 			settings.width=900
 			settings.height=600
-			settings.hierarchy=2
+			settings.hierarchy=1
+			settings.max_hierarchy =2
 			settings.center_radius = 40
-			settings.center_line_length=150
+			settings.center_line_length=200
 			settings.context=context
-			settings.minimum_line_length = 10
+			settings.minimum_line_length = 80
+			settings.default_cutline_rate = 0.4
+			settings.random_line_length=false
 			settings.page_size=10
 			chart= new OrgChart(settings)
 			chart.init()
-			chart.render()
 
 		})
 	</script>

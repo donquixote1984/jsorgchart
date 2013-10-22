@@ -33,13 +33,25 @@ function Partial_Render(settings){
 				_new_base_center = new Point(-this.settings.center_line_length,0)
 			}
 			else{
-				parent_vector= grandparent.minus(parent)
-				var deltaX = parent_vector.x
-				var deltaY = parent_vector.y
-				var rate = DIST_GRADIENT_RATE
-				var _new_base_center_x = deltaX*(1-rate)+grandparent.partial_render.center.x
-				var _new_base_center_y = deltaY*(1-rate)+grandparent.partial_render.center.y
-				_new_base_center = new Point(_new_base_center_x,_new_base_center_y)
+				if(this.partial.hierachy == this.settings.max_hierarchy){
+					//done the minimum
+					var hierachy_length = this.settings.minimum_line_length
+					var parent_length = grandparent.dist(parent)
+					var rate = hierachy_length/parent_length
+					var _new_base_center_x = (1-rate)*parent.partial_render.center.x
+					var _new_base_center_y = (1-rate)*parent.partial_render.center.y
+					_new_base_center = new Point(_new_base_center_x,_new_base_center_y)
+				}
+				else{
+					parent_vector= grandparent.minus(parent)
+					var deltaX = parent_vector.x
+					var deltaY = parent_vector.y
+					var rate = this.settings.default_cutline_rate
+					var _new_base_center_x = deltaX*(1-rate)+grandparent.partial_render.center.x
+					var _new_base_center_y = deltaY*(1-rate)+grandparent.partial_render.center.y
+					_new_base_center = new Point(_new_base_center_x,_new_base_center_y)
+				}
+
 
 			}
 			
@@ -60,41 +72,77 @@ function Partial_Render(settings){
 				this.center = _new_base_center.rotate(parent.partial_render.center,angle_unit/2)
 			}
 			else
+			{
 				this.center= _new_base_center.rotate(parent.partial_render.center,angle_unit*index+angle_unit/2) 
+			}
 				//if(this.partial.index%2==0)
 				//this.center = this.center.multiply(1+Math.random(1))
+			if(this.settings.random_line_length){
+			if(this.partial.hierachy==1){
+				if(this.partial.index%2==1){
+					this.center = this.center.multiply(2-Math.random(0.5))
+				}
+				else{
+					this.center=this.center.multiply(1+Math.random(0.5))
+				}
+			}
+		}
 
 		}
 
 	}
 	this.render= function(context){
+		var render_partial = this
 		if(this.visible==false)
 			return
+		if(this.partial.data=='page'){
+			context.save()
+			context.beginPath()
+			context.arc(render_partial.center.x,render_partial.center.y,render_partial.radius,0,2*Math.PI,true)
+			var gra = context.createRadialGradient(render_partial.center.x, render_partial.center.y,render_partial.radius-circle_style.borderWidth,render_partial.center.x,render_partial.center.y,render_partial.radius)
+			gra.addColorStop(0,circle_style.gra_start)
+
+			gra.addColorStop(1,circle_style.gra_stop)
+			context.fillStyle = gra
+			context.shadowBlur = circle_style.shadowBlur
+			context.shadowColor= circle_style.shadowColor
+			context.closePath()
+			context.fill()
+			context.beginPath()
+			context.arc(render_partial.center.x,render_partial.center.y,render_partial.radius - circle_style.borderWidth,0,2*Math.PI,true)
+			context.clip()
+			//context.drawImage(image,render_partial.center.x-50,render_partial.center.y-50,100,100)
+			context.fillStyle = "rgb(255,0,0)"
+			context.font ="10pt Arial"
+			context.fillText(render_partial.data.text,render_partial.center.x,render_partial.center.y)
+			context.closePath()	
+			context.restore() 			
+			return
+		}
 		var image= new Image()
 		image.src = this.data.image
-		var render_partial = this
 		image.onload = function(){
-					context.save()
-					context.beginPath()
-					context.arc(render_partial.center.x,render_partial.center.y,render_partial.radius,0,2*Math.PI,true)
-					var gra = context.createRadialGradient(render_partial.center.x, render_partial.center.y,render_partial.radius-circle_style.borderWidth,render_partial.center.x,render_partial.center.y,render_partial.radius)
-					gra.addColorStop(0,circle_style.gra_start)
+			context.save()
+			context.beginPath()
+			context.arc(render_partial.center.x,render_partial.center.y,render_partial.radius,0,2*Math.PI,true)
+			var gra = context.createRadialGradient(render_partial.center.x, render_partial.center.y,render_partial.radius-circle_style.borderWidth,render_partial.center.x,render_partial.center.y,render_partial.radius)
+			gra.addColorStop(0,circle_style.gra_start)
 
-					gra.addColorStop(1,circle_style.gra_stop)
-					context.fillStyle = gra
-					context.shadowBlur = circle_style.shadowBlur
-					context.shadowColor= circle_style.shadowColor
-					context.closePath()
-					context.fill()
-					context.beginPath()
-					context.arc(render_partial.center.x,render_partial.center.y,render_partial.radius - circle_style.borderWidth,0,2*Math.PI,true)
-					context.clip()
-					context.drawImage(image,render_partial.center.x-50,render_partial.center.y-50,100,100)
-					//context.fillStyle = "rgb(255,0,0)"
-					//context.font ="10pt Arial"
-					//context.fillText(render_partial.data.text,render_partial.center.x,render_partial.center.y)
-					context.closePath()	
-					context.restore() 
+			gra.addColorStop(1,circle_style.gra_stop)
+			context.fillStyle = gra
+			context.shadowBlur = circle_style.shadowBlur
+			context.shadowColor= circle_style.shadowColor
+			context.closePath()
+			context.fill()
+			context.beginPath()
+			context.arc(render_partial.center.x,render_partial.center.y,render_partial.radius - circle_style.borderWidth,0,2*Math.PI,true)
+			context.clip()
+			context.drawImage(image,render_partial.center.x-50,render_partial.center.y-50,100,100)
+			//context.fillStyle = "rgb(255,0,0)"
+			//context.font ="10pt Arial"
+			//context.fillText(render_partial.data.text,render_partial.center.x,render_partial.center.y)
+			context.closePath()	
+			context.restore() 
 		}
 		
 	}
