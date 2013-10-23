@@ -23,6 +23,7 @@ function OrgChart(settings){
 	this.center_radius = settings.center_radius
 	this.center_line_length = settings.center_line_length
 	this.root = null
+	this.radius_regression = 0.8
 	this.page_size=settings.page_size==null?10:settings.page_size
 	this.init = function(){
 		var _chart= this
@@ -30,6 +31,7 @@ function OrgChart(settings){
 			this.root = new Element(data,_chart)
 			this.root.render()
 			this.root.open()
+			//this.root.next_page()
 			//alert(data)
 		})
 	}

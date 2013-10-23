@@ -3,8 +3,7 @@ import random
 from django.http import HttpResponse
 from django.shortcuts import render_to_response,RequestContext
 
-images = """
-0091cdc19467eb349cbf163c93a0e4f88f623ba2.jpg
+images = """0091cdc19467eb349cbf163c93a0e4f88f623ba2.jpg
 0570ec2010d2471d62a7f3e9bc439ea47b9efd20.jpg
 0884221e6f3bee813075614b1774543ec7f0c284.jpg
 0cf4b29130de0a07b129666e2494cd7058ce260f.jpg
@@ -55,8 +54,7 @@ f25e3fdf7af6d4b6be32b3d4786b082dcdd1c3ee.jpg
 f2b85ecb7ae82302fb5468c4353fdf11c3c053fe.jpg
 f68b4fe8a93e51294411c93671e0add896bec918.jpg
 f77cf693c04d9b42f48ec5712fb9a6d4a478f9cc.jpg
-fdc61aaed88784f93ed6ce7ed29d38b5f4aeebe4.jpg
-"""
+fdc61aaed88784f93ed6ce7ed29d38b5f4aeebe4.jpg"""
 images_arr = images.split("\n")
 name_arr = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
 def index(request):

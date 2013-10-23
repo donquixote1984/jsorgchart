@@ -8,5 +8,5 @@
 7. the fuck zoom out is by dragging
 8. wtf the pin and unpin
 
-10. bezier animation
-12. 
+9. bezier animation
+10. 
