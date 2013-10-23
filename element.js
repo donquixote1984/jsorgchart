@@ -1,7 +1,8 @@
 function Element(data,chart){
     this.id = data.id
     this.text = data.text
-    this.image = data.image
+    this.image = data.image 
+    
     this.chart = chart
     this.center=  new Point(0,0)
     this.children =[]
