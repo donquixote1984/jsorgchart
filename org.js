@@ -29,13 +29,23 @@ function OrgChart(settings){
 		var _chart= this
 		$.getJSON("http://localhost:8000/first/",function(data){
 			this.root = new Element(data,_chart)
+			this.root.visible=true
 			this.root.render()
+			//var edge = new Edge(this.root)
 			this.root.open()
+			//edge.render_edge()
+			//this.root.render_children()
 			//this.root.next_page()
 			//alert(data)
 		})
 	}
 	this.render = function(){
+	}
+	this.clear = function(){
+		var context=this.context
+		context.save()
+		context.clearRect(-400,-300,800,600)
+		context.restore()
 	}
 
 

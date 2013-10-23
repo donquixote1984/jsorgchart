@@ -61,7 +61,7 @@ def index(request):
 	return render_to_response("org.html",{})
 def home(request):
 	arr = []
-	for i in range(0,10):
+	for i in range(0,25):
 		hash ={}
 		r_index_name = random.randint(0,len(name_arr)-1)
 		r_index_image = random.randint(0,len(images_arr)-1)

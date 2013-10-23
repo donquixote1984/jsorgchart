@@ -12,7 +12,12 @@ function drawLine(from,to,context){
 function Element(data,chart){
     this.id = data.id
     this.text = data.text
-    this.image = data.image 
+    this.image_loaded=false
+    this.image =new Image()
+    this.image.src = "static/huaban.com/"+data.image
+    this.image.onload = function(){
+        this.image_loaded = true
+    }
     this.chart = chart
     this.center=  new Point(0,0)
     this.children =[]
@@ -30,6 +35,7 @@ function Element(data,chart){
     this.angle = 0
     this.angle_unit = 0
     this.timer = null
+    this.edge_radius = this.radius+10
     this.open = function(){
         var _this = this
         if(this.children.length==0){
@@ -40,7 +46,7 @@ function Element(data,chart){
                 })
                 if(_this.children.length>_this.page_size){
                     // add edge
-                    _this.edge()
+                    //_this.edge()
                 }
                 _this.init_children_visage()
                 _this.render_children()
@@ -56,7 +62,7 @@ function Element(data,chart){
             if(this.children[i].angle<this.children[i].angle_unit/2){
                 this.children[i].visible = false
             }
-            else if(this.children[i].angle<2*Math.PI-this.children[i].angle_unit/2&&this.children[i].angle>this.children[i].angle_unit/2){
+            else if(this.children[i].angle<=2*Math.PI-this.children[i].angle_unit/2&&this.children[i].angle>=this.children[i].angle_unit/2){
                 this.children[i].visible = true
             }
             else{
@@ -66,10 +72,15 @@ function Element(data,chart){
     }
 
     this.init = function(url){
+        var _this = this
         $.getJSON(url,function(data){
-            this.id = data.id
-            this.text=data.text
-            this.image =data.image
+            _this.id = data.id
+            _this.text=data.text
+            _this.image =new Image()
+            _this.image.src = "static/huaban.com/"+data.image
+            _this.image.onload = function(){
+                _this.image_loaded = true
+            }
         })
     }
     this.click = function(){
@@ -88,10 +99,11 @@ function Element(data,chart){
 
     this.rotate_children = function(angle){
         for(var i = 0 ; i<this.children.length ; i++){
-            if(this.children[i].angle<this.children[i].angle_unit/2){
+
+            if(this.children[i].angle<this.children[i].angle_unit/2-1){
                 this.children[i].visible = false
             }
-            else if(this.children[i].angle<2*Math.PI-this.children[i].angle_unit/2&&this.children[i].angle>this.children[i].angle_unit/2){
+            else if(this.children[i].angle<2*Math.PI-this.children[i].angle_unit/4&&this.children[i].angle>this.children[i].angle_unit/2){
                 this.children[i].visible = true
             }
             else{
@@ -115,9 +127,15 @@ function Element(data,chart){
         this.children.push(e)
         return e
     }
-    this.edge = function(){
+   /*this.edge = function(){
         //add the edge for next and prev page
-    }
+        var context= this.chart.context
+        context.save()
+        context.fillStyle = "#336699"
+        context.arc(this.center.x,this.center.y,this.edge_radius,0,2*Math.PI,true)
+        context.fill()
+        context.restore()
+    }*/
     this.locate =function(index,length){
         if(this.parent ==null){
             return
@@ -152,23 +170,37 @@ function Element(data,chart){
         if(p==null){
             p=1
         }
+        this.chart.clear()
+
         start_children_index = (p-1)*this.page_size
         if(start_children_index>this.children.length){
             return
         }
-        var len = this.children.length-start_children_index>this.page_size?page_size:this.children.length-start_children_index
-        for(var i =0;i<len;i++){
-            this.children[i].render()
-            if(this.children[i].visible)
+        //var len = this.children.length-start_children_index>this.page_size?this.page_size:this.children.length-start_children_index
+        for(var i =0;i<this.children.length;i++){
+           if(this.children[i].visible)
                 drawLine(this.center,this.children[i].center,this.chart.context)
+            this.children[i].render()
         }
+        var edge = new Edge(this)
+        edge.render()
+        this.render()
     }
 
     this.next_page = function(){
         _this = this
+        var rotate_unit = -Math.PI/30
+        var rotate_counter= 0
         this.timer = setInterval(function(){
-            _this.rotate_children(Math.PI/60)
+            rotate_counter+=rotate_unit
+            if(rotate_counter<-2*Math.PI){
+                clearInterval(_this.timer)
+            }
+            else{
+            _this.rotate_children(rotate_unit)
+            rotate_counter+=rotate_unit
             _this.render_children()
+        }
         },33)
         this.page+=1
     }
@@ -180,29 +212,23 @@ function Element(data,chart){
         if(this.visible==false){
             return
         }
-        var image= new Image()
-        image.src = "static/huaban.com/"+this.image
         var e = this
-        image.onload = function(){
-            var context=e.chart.context
-            context.save()
-            context.beginPath()
-            context.arc(e.center.x,e.center.y,e.radius,0,2*Math.PI,true)
-            var gra = context.createRadialGradient(e.center.x, e.center.y,e.radius-circle_style.borderWidth,e.center.x,e.center.y,e.radius)
-            gra.addColorStop(0,circle_style.gra_start)
-            gra.addColorStop(1,circle_style.gra_stop)
-            context.fillStyle = gra
-            context.shadowBlur = circle_style.shadowBlur
-            context.shadowColor= circle_style.shadowColor
-            context.closePath()
-            context.fill()
-            context.beginPath()
-            context.arc(e.center.x,e.center.y,e.radius - circle_style.borderWidth,0,2*Math.PI,true)
-            context.clip()
-            context.drawImage(image,e.center.x-50,e.center.y-50,100,100)
-            context.closePath() 
-            context.restore() 
-        }
+        var context=e.chart.context
+        context.save()
+        context.beginPath()
+        context.arc(e.center.x,e.center.y,e.radius,0,2*Math.PI,true)
+        var gra = context.createRadialGradient(e.center.x, e.center.y,e.radius-circle_style.borderWidth,e.center.x,e.center.y,e.radius)
+        gra.addColorStop(0,circle_style.gra_start)
+        gra.addColorStop(1,circle_style.gra_stop)
+        context.fillStyle = gra
+        context.closePath()
+        context.fill()
+        context.beginPath()
+        context.arc(e.center.x,e.center.y,e.radius - circle_style.borderWidth,0,2*Math.PI,true)
+        context.clip()
+        context.drawImage(this.image,e.center.x-50,e.center.y-50,100,100)
+        context.closePath() 
+        context.restore() 
     }
     this.is_in_area = function(x,y){
         var r = (this.center.x-x)*(this.center.x-x)+(this.y-y)*(this.y-y)
