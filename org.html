@@ -1,6 +1,7 @@
 <html>
 	<head>
 		<script type="text/javascript" src="static/jquery.js"></script>
+		<script type="text/javascript" src="static/KeySpline.js"></script>
 		<script type="text/javascript" src="static/point.js"></script>
 		<script type="text/javascript" src="static/pagination_effect_vendor.js"></script>
 		<script type="text/javascript" src="static/edge.js"></script>
@@ -9,6 +10,11 @@
 		<script type="text/javascript" src="static/partial_render.js"></script>
 		<script type="text/javascript" src="static/org.js"></script>
 	</head>
+	<style>
+	.cursor {
+		cursor:pointer;
+	}
+	</style>
 	<script>
 		$(function(){
 			canvas= document.getElementById("mycanvas")
@@ -27,12 +33,14 @@
 			settings.default_cutline_rate = 0.4
 			settings.random_line_length=false
 			settings.page_size=10
+			settings.id = "mycanvas"
 			chart= new OrgChart(settings)
 			chart.init()
 
 		})
 	</script>
 	<body>
+		<div id='thefuck' style="width:100px,height:30px,border:1px solid gray"></div>
 		<canvas id = "mycanvas" width="800px" height="600px" style="margin:0 auto;display:block;border:1px solid #aeaeae"></canvas>
 	</body>
 </html>

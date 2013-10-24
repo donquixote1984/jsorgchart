@@ -4,12 +4,15 @@ var circle_style = {
 				outerRadius:30,
 				gra_start : '#aeaeae',
 				gra_stop : '#eaeaea',
+				gra_hover_stop : '#808080',
 				shadowBlur:20,
 				shadowColor: '2e2e2e',
 				borderWidth:5
 		}
 
 function OrgChart(settings){
+	this.id = settings.id
+	this.canvas = $("#"+this.id)
 	this.context = settings.context
 	this.width = settings.width
 	this.height=settings.height
@@ -25,21 +28,23 @@ function OrgChart(settings){
 	this.root = null
 	this.radius_regression = 0.8
 	this.page_size=settings.page_size==null?10:settings.page_size
+	this.bezier =new KeySpline(0.19,0.64,0.35,0.76)
 	this.init = function(){
 		var _chart= this
 		$.getJSON("http://localhost:8000/first/",function(data){
-			this.root = new Element(data,_chart)
-			this.root.visible=true
-			this.root.render()
+			_chart.root = new Element(data,_chart)
+			_chart.root.visible=true
+			_chart.root.render()
 			//var edge = new Edge(this.root)
-			this.root.open()
+			_chart.root.open()
+			//_chart.root.close()
 			//edge.render_edge()
 			//this.root.render_children()
 			//this.root.next_page()
 			//alert(data)
+			_chart.init_event()
 		})
-	}
-	this.render = function(){
+		
 	}
 	this.clear = function(){
 		var context=this.context
@@ -47,9 +52,29 @@ function OrgChart(settings){
 		context.clearRect(-400,-300,800,600)
 		context.restore()
 	}
-
-
-
+	this.init_event = function(){
+		this.init_hover()
+		this.init_click()
+	}
+	this.init_click = function(){
+		var _this = this
+		this.canvas.click(function(e){
+			var p = getMousePos(this,e)
+			_this.root.check_click(p.x-400,p.y-300)
+		})
+	}
+	this.init_hover  =function(){
+		var _this =this
+		this.canvas.mousemove(function(e){
+			var p = getMousePos(this,e)
+			 writeMessage(p)
+			_this.root.check_hover(p.x-400,p.y-300)
+		})
+	}
+	this.render= function(){
+		this.clear()
+		this.root.render_cascade()
+	}
 	/*this.parse = function(data,index,parent){
 		var p = new Partial()
 		p.parseData(data)
@@ -73,7 +98,7 @@ function OrgChart(settings){
 		if(p.heriachy>=this.init_heriachy-1)
 			return p
 
-			
+		
 
 		if(data.children!=null){
 			p.length = data.children.length
@@ -85,4 +110,12 @@ function OrgChart(settings){
 		return p
 
 	}*/
+}
+
+function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return new Point(evt.clientX - rect.left,evt.clientY - rect.top)
+}
+function writeMessage(p){
+	$("#thefuck").text((p.x-400)+" "+(p.y-300))
 }

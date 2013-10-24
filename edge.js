@@ -16,7 +16,7 @@ function Edge(element){
         context.closePath()
         context.restore()
     }
-    this.hover_left = function(){
+    this.hover_right = function(){
        var context= this.element.chart.context
        context.save()
        context.beginPath()
@@ -31,7 +31,7 @@ function Edge(element){
        context.closePath()
        context.restore()
     }
-    this.hover_right = function(){
+    this.hover_left = function(){
        var context= this.element.chart.context
        context.save()
        context.beginPath()
@@ -46,19 +46,42 @@ function Edge(element){
        context.closePath()
        context.restore()
     }
-    this.hover = function(p){
-        var dist = (p.x - this.center.x)*(p.x-this.center.x) + (p.y-this.center.y)*(p.y-this.center.y)
-
-        if(dist>this.element.radius*this.element.radius&&dist<this.radius*this.raidus){
+    this.mark_left = function(){
+      this.right = false
+      this.left = true
+      this.hover=true
+    }
+    this.mark_right = function(){
+      this.right=true
+      this.left =false
+      this.hover=true
+    }
+    this.unmark = function(){
+      this.right=false
+      this.left=false
+      this.hover=false
+    }
+    this.check_hover = function(x,y){
+        if(this.is_in_edge(x,y))
             this.hover=  true
-            if(p.x>this.center.x){
+            if(x>this.center.x){
                 this.right= true
-                this.hover_right()
+                this.left = false
+                
             }
             else{
                 this.left = true
-                this.hover_left()
+                this.right=false
             }
+        this.element.render()
+    }
+    this.is_in_edge = function(x,y){
+        var dist = (x - this.center.x)*(x-this.center.x) + (y-this.center.y)*(y-this.center.y)
+        if(dist>this.element.radius*this.element.radius&&dist<this.radius*this.radius){
+          return true
+        }
+        else{
+          return false
         }
     }
     this.hoveroff= function(p){
@@ -66,7 +89,7 @@ function Edge(element){
             this.hover= false
             this.left=false
             this.right =false
-            this.render()
+            //this.render()
         }
     }
     this.click =function(){

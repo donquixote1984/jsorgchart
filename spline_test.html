@@ -1,0 +1,49 @@
+<html>
+	<head>
+		<script src="jquery.js" type="text/javascript"></script>
+		<script src="KeySpline.js" type="text/javascript"></script>
+			<style>
+	#mycanvas {
+		border:1px solid gray;
+	}
+	</style>
+
+	<script type="text/javascript">
+		$(function(){
+			canvas= document.getElementById("mycanvas")
+			context = canvas.getContext("2d")
+			context.fillStyle="rgb(255,255,255)"
+			context.rect(0,0,800,600)
+			context.fill()
+			context.translate(400,300)	
+
+			context.beginPath()
+			context.fillStyle = "#336699"
+			context.arc(0,0,20,0,2*Math.PI,true)
+			context.fill()
+			context.closePath()
+			var k = new KeySpline(0.66,0.08,0.91,0.31)
+			var DURATION = 2
+			var t = 0
+			var t_unit = 0.1
+			var t_step = 0.1/2
+			timer = setInterval(function(){
+				var dist = k.get(t)*200
+				context.beginPath()
+				context.arc(dist,0,20,0,2*Math.PI,true)
+				context.fill()
+				context.closePath()
+				t+=t_step
+				if(t>2){
+					clearInterval(timer)
+				}
+			},1000/60)
+		})
+	</script>
+	</head>
+
+	
+	<body>
+		<canvas id="mycanvas" width="800px" height="600px"></canvas>
+	</body>
+</html>
