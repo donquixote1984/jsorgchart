@@ -68,7 +68,10 @@ function OrgChart(settings){
 		this.canvas.mousemove(function(e){
 			var p = getMousePos(this,e)
 			 writeMessage(p)
-			_this.root.check_hover(p.x-400,p.y-300)
+			if(!_this.root.check_hover(p.x-400,p.y-300)){
+				_this.render()
+
+			}
 		})
 	}
 	this.render= function(){
