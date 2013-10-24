@@ -1,13 +1,16 @@
 function drawLine(from,to,context){
     context.save()
     context.beginPath()
+    context.globalCompositeOperation="destination-over"
     context.moveTo(to.center.x,to.center.y)
     context.lineTo(from.center.x,from.center.y)
     if(from.is_hovered==false){
-        context.strokeStyle = "rgb(200,200,200)"
+        context.lineWidth=1
+        context.strokeStyle = "#cacaca"
     }
     else{
-        context.strokeStyle = "#808080"
+        context.lineWidth=3
+        context.strokeStyle = "#dadada"
     }
     
     context.stroke()
@@ -371,15 +374,17 @@ function Element(data,chart){
         this.render()
     }
     this.render_cascade = function(){
+            this.render()
+        this.render()
         if(this.is_open&&this.children.length>0){
            for(var i =0;i<this.children.length;i++){
                 if(this.children[i].visible){
-                    drawLine(this.center,this.children[i].center,this.chart.context)
+                    drawLine(this,this.children[i],this.chart.context)
                     this.children[i].render_cascade()
                 }
             } 
         }
-        this.render()
+        
     }
     this.is_in_area = function(x,y){
         var r = Math.sqrt((this.center.x-x)*(this.center.x-x)+(this.center.y-y)*(this.center.y-y))
@@ -401,71 +406,88 @@ function Element(data,chart){
     this.hover = function(){
         this.chart.canvas.addClass("cursor")
         this.mark_hover()
-        this.chart.clear()
-        this.chart.render()
+        //this.chart.clear()
+        //this.chart.render()
         //this.render_cascade()
     }
     this.unhover = function(){
         if(this.is_hovered==true){
             this.chart.canvas.removeClass("cursor")
             this.is_hovered= false
-            this.chart.render()
+            for(var i =0;i<this.children.length;i++){
+                if(this.children[i].visible){
+                    this.children[i].unhover()
+                }
+            }
+            if(this.edge != null)
+                this.edge.unmark()
+            //this.chart.render()
         }
 
     }
     this.check_hover = function(x,y){
-        if(this.is_hovered==false){
-            if(this.is_edged){
-                if(!this.edge.is_in_edge(x,y)){
-                    this.unhover()
-                }
-            }
-            else if(!this.is_in_area(x,y)){
-                this.unhover()
-            }
-        }
-        else{
-            if(this.is_edged){
-                if(this.edge.is_in_edge(x,y)){
-                    if(x>=this.edge.center.x){
-                        if(this.edge.right==false){
-                            this.edge.mark_right()
-                            this.hover()
-                        }
+        var unchange = true
+        if(this.is_edged){
+            if(this.edge.is_in_edge(x,y)){
+                if(x>=this.edge.center.x){
+                    if(this.edge.right==false){
+                        this.edge.mark_right()
+                        this.hover()
+                        unchange=false
                     }
-                    else{
-                        if(this.edge.left==false){
-                            this.edge.mark_left()
-                            this.hover()  
-                        }
-                    }
-                }
-                else if(this.is_in_area(x,y)){
-                   if(this.edge.hover=true){
-                        this.edge.unmark()
-                        this.hover() 
-                   }
                 }
                 else{
-                    this.edge.unmark()
-                    this.unhover()
+                    if(this.edge.left==false){
+                        this.edge.mark_left()
+                        this.hover()  
+                        unchange=false
+                    }
                 }
             }
             else if(this.is_in_area(x,y)){
-                this.hover()
+               if(this.edge.hover==true){
+                    this.edge.unmark()
+                    this.hover() 
+                    unchange=false
+               }
             }
             else{
-                this.unhover()
+                if(this.edge.hover){
+                    this.unhover()
+                    unchange=false
+                }
+                if(this.is_hovered){
+                    this.unhover()
+                    unchange=false
+                }
+            }
+        }
+        else if(this.is_in_area(x,y)){
+            if(this.is_hovered==false){
+                this.hover()
+                unchange=false
+            }
+        }
+        else{
+            if(this.is_hovered){
+                if(this.parent!=null&&this.parent.is_hovered){
+
+                }
+                else{
+                    this.unhover()
+                }
+                unchange=false
             }
         }
         //this.check_edge(x,y)
         if(this.is_open){
             for(var i =0;i<this.children.length;i++){
                if(this.children[i].visible) {
-                    this.children[i].check_hover(x,y)
+                    unchange = unchange & this.children[i].check_hover(x,y)
                }
             }
         }
+        return unchange
     }
 
     this.check_click = function(x,y){
