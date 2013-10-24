@@ -1,9 +1,15 @@
 function drawLine(from,to,context){
     context.save()
     context.beginPath()
-    context.moveTo(to.x,to.y)
-    context.lineTo(from.x,from.y)
-    context.strokeStyle = "rgb(200,200,200)"
+    context.moveTo(to.center.x,to.center.y)
+    context.lineTo(from.center.x,from.center.y)
+    if(from.is_hovered==false){
+        context.strokeStyle = "rgb(200,200,200)"
+    }
+    else{
+        context.strokeStyle = "#808080"
+    }
+    
     context.stroke()
     context.closePath()
     context.restore()
@@ -23,10 +29,10 @@ function Element(data,chart){
     this.children =[]
     this.page_size = 10
     this.hierarchy = 0
-    this.max_length = 150
-    this.min_length = 50
+    this.max_length = 180
+    this.min_length = 100
     this.parent = null
-    this.radius = 50 
+    this.radius = 35 
     this.is_open = false
     this.pin = false
     this.visible = false
@@ -57,7 +63,7 @@ function Element(data,chart){
                 _this.init_children_visage()
                 //_this.render_children()
                 //_this.close()
-                //_this.bloom()
+                _this.bloom()
             })
         }
         else{ //da fuck
@@ -175,7 +181,7 @@ function Element(data,chart){
         //var len = this.children.length-start_children_index>this.page_size?this.page_size:this.children.length-start_children_index
         for(var i =0;i<this.children.length;i++){
            if(this.children[i].visible){
-                drawLine(this.center,this.children[i].center,this.chart.context)
+                drawLine(this,this.children[i],this.chart.context)
                 this.children[i].render()
             }
         }
@@ -202,7 +208,10 @@ function Element(data,chart){
             var k = _this.chart.bezier.get(t)*walk_rate/_this.radius
             for(var i =0 ;i<_this.children.length; i++){
                 if(_this.children[i].visible){
-                    var center = new Point(_this.children[i].center.x-_this.children[i].center.x*k,_this.children[i].center.y-_this.children[i].center.y*k)
+                    var center = new Point(
+                        _this.children[i].center.x+ (-_this.children[i].center.x+_this.center.x)*k,
+                        _this.children[i].center.y+ (-_this.children[i].center.y+_this.center.y)*k
+                        )
                     var dist= center.dist(_this.center)
                      if(dist>=_this.radius+_this.children[i].radius){
                         _this.children[i].render(center)
@@ -239,11 +248,14 @@ function Element(data,chart){
              var k = _this.chart.bezier.get(t)*walk_rate/_this.radius
             for(var i =0;i<_this.children.length;i++){
                 if(_this.children[i].visible){
-                    var center = new Point(_this.children[i].center.x*k,_this.children[i].center.y*k)
+                    var center = new Point(
+                        _this.center.x+(_this.children[i].center.x - _this.center.x)*k,
+                        _this.center.y+(_this.children[i].center.y - _this.center.y)*k
+                        )
+
                     if(center.dist(_this.center)>=_this.radius){
                         _this.children[i].render(center)
                     }
-                    
                 }
             }
             _this.render()
@@ -258,8 +270,15 @@ function Element(data,chart){
         
     }
 
+    this.max_page = function(){
+        var len = this.children.length
+        return parseInt(len/this.page_size)+1
+    }
     this.next_page = function(){
-        _this = this
+        if(this.page>this.max_page()){
+           return
+        }
+        var _this = this
         var rotate_unit = -Math.PI/30
         var rotate_counter= 0
         this.timer = setInterval(function(){
@@ -276,7 +295,24 @@ function Element(data,chart){
         this.page+=1
     }
     this.prev_page = function(){
-
+        if(this.page<0){
+            return
+        }
+        var _this = this
+        var rotate_unit = Math.PI/30
+        var rotate_counter= 0
+        this.timer = setInterval(function(){
+            rotate_counter+=rotate_unit
+            if(rotate_counter>2*Math.PI){
+                clearInterval(_this.timer)
+            }
+            else{
+            _this.rotate_children(rotate_unit)
+            rotate_counter+=rotate_unit
+            _this.render_children()
+        }
+        },33)
+        this.page-=1
     }
 
     this.render = function(center){
@@ -295,7 +331,7 @@ function Element(data,chart){
                 this.edge.hover_left()
             }
             else{
-                this.edge.render()
+                this.edge.render(_center)
             }
         }
         var context=this.chart.context
@@ -347,7 +383,6 @@ function Element(data,chart){
     }
     this.is_in_area = function(x,y){
         var r = Math.sqrt((this.center.x-x)*(this.center.x-x)+(this.center.y-y)*(this.center.y-y))
-        //alert(r)
         if(r<=this.radius){
             return true
         }
@@ -355,54 +390,73 @@ function Element(data,chart){
             return false
         }
     }
+    this.mark_hover = function(){
+        this.is_hovered = true
+        for(var i =0;i<this.children.length;i++){
+            if(this.children[i].visible){
+               this.children[i].mark_hover() 
+            }
+        }
+    }
     this.hover = function(){
         this.chart.canvas.addClass("cursor")
-        this.is_hovered=true
-        this.render_cascade_without_line()
+        this.mark_hover()
+        this.chart.clear()
+        this.chart.render()
+        //this.render_cascade()
     }
     this.unhover = function(){
         if(this.is_hovered==true){
             this.chart.canvas.removeClass("cursor")
             this.is_hovered= false
-            this.render_cascade_without_line()
+            this.chart.render()
         }
 
     }
     this.check_hover = function(x,y){
-        if(this.is_hover){
-            return
-        }
-        if(this.is_edged){
-            if(this.edge.is_in_edge(x,y)){
-                if(x>=this.edge.center.x){
-                    if(this.edge.right==false){
-                        this.edge.mark_right()
-                        this.hover()
-                    }
-                }
-                else{
-                    if(this.edge.left==false){
-                        this.edge.mark_left()
-                        this.hover()  
-                    }
+        if(this.is_hovered==false){
+            if(this.is_edged){
+                if(!this.edge.is_in_edge(x,y)){
+                    this.unhover()
                 }
             }
-            else if(this.is_in_area(x,y)){
-               if(this.edge.hover=true){
-                    this.edge.unmark()
-                    this.hover() 
-               }
-            }
-            else{
-                this.edge.unmark()
+            else if(!this.is_in_area(x,y)){
                 this.unhover()
             }
         }
-        else if(this.is_in_area(x,y)){
-            this.hover()
-        }
         else{
-            this.unhover()
+            if(this.is_edged){
+                if(this.edge.is_in_edge(x,y)){
+                    if(x>=this.edge.center.x){
+                        if(this.edge.right==false){
+                            this.edge.mark_right()
+                            this.hover()
+                        }
+                    }
+                    else{
+                        if(this.edge.left==false){
+                            this.edge.mark_left()
+                            this.hover()  
+                        }
+                    }
+                }
+                else if(this.is_in_area(x,y)){
+                   if(this.edge.hover=true){
+                        this.edge.unmark()
+                        this.hover() 
+                   }
+                }
+                else{
+                    this.edge.unmark()
+                    this.unhover()
+                }
+            }
+            else if(this.is_in_area(x,y)){
+                this.hover()
+            }
+            else{
+                this.unhover()
+            }
         }
         //this.check_edge(x,y)
         if(this.is_open){
@@ -418,6 +472,12 @@ function Element(data,chart){
         if(this.is_edged ){
             if(this.edge.is_in_edge(x,y)){
                 //turn the page
+                if(this.edge.right){
+                    this.next_page()
+                }
+                else{
+                    this.prev_page()
+                }
             }
         }
         if(this.is_in_area(x,y)){
@@ -431,7 +491,7 @@ function Element(data,chart){
         }
         if(this.is_open){
             for(var i =0;i<this.children.length;i++){
-                if(this.children.visible){
+                if(this.children[i].visible){
                     this.children[i].check_click(x,y)
                 }
             }

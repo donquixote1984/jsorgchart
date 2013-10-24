@@ -1,17 +1,20 @@
 function Edge(element){
-    this.radius_append = 10 
-    this.radius = element.radius+this.radius_append
+    this.radius = element.radius*1.2
     this.center = element.center
     this.element = element
     this.hover= false
     this.right=false
     this.left= false
-    this.render= function(){
+    this.render= function(center){
+        var _center = center
+        if(_center == null){
+            _center = this.center
+        }
         var context= this.element.chart.context
         context.save()
         context.beginPath()
         context.fillStyle = "#336699"
-        context.arc(this.center.x,this.center.y,this.radius,0,2*Math.PI,true)
+        context.arc(_center.x,_center.y,this.radius,0,2*Math.PI,true)
         context.fill()
         context.closePath()
         context.restore()
