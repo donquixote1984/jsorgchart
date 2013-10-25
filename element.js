@@ -1,4 +1,7 @@
 function drawLine(from,to,context){
+    if(from.check_bound()==false&&to.check_bound()==false){
+        return
+    }
     context.save()
     context.beginPath()
     //context.globalCompositeOperation="destination-over"
@@ -48,7 +51,7 @@ function Element(data,chart){
     this.is_edged = false
     this.edge=null
     this.bloom_time = 1
-    this.turning = false
+    this.disable = false
     this.open = function(){
         var _this = this
 
@@ -143,18 +146,11 @@ function Element(data,chart){
         }
         this.angle += angle
     }
-    this.move = function(to){
-        var diff_x = to.x - this.x
-        var diff_y = to.y - this.y
-        this.center.x= to.x
-        this.center.y =to.y
-        for(var i =0;i<this.children.length;i++){
-            var center_x= this.children[i].x
-            var center_y = this.children[i].y
-            this.children[i].move(new Point(
-                    center_x+diff_x,
-                    center_y+diff_y
-                ))
+    this.translate = function(deltaX,deltaY){
+        this.center.x += deltaX
+        this.center.y +=deltaY
+        for(var i =0 ;i<this.children.length;i++){
+            this.children[i].translate(deltaX,deltaY)
         }
     }
     this.add_children = function(data){
@@ -259,7 +255,7 @@ function Element(data,chart){
             }
         },1000/60)
     }
-    
+
     this.bloom = function(){
         var _this = this
         var t_step = 0.1/_this.bloom_time
@@ -355,6 +351,9 @@ function Element(data,chart){
             _center = this.center
         }
         if(this.visible==false){
+            return
+        }
+        if(this.check_bound()==false){
             return
         }
         if(this.is_edged){
@@ -549,14 +548,6 @@ function Element(data,chart){
             }
        }
     }
-    this.check_dblclick = function(x,y){
-        if(this.center.x==0&&this.center.y ==0){
-            return
-        }
-        else{
-
-        }
-    }
     this.check_click = function(x,y){
         if(this.is_in_area(x,y)){
             // the fuck open
@@ -575,4 +566,27 @@ function Element(data,chart){
             }
         }
     }
+
+    this.check_bound = function(){
+        var width = this.chart.width/2+this.radius
+        var height = this.chart.height/2+this.radius
+
+        if(Math.abs(this.chart.center.x)>width){
+            return false
+        }
+        if(Math.abs(this.chart.center.y)>height){
+            return false
+        }
+
+        return true
+    }
+
+    this.chroot = function(){
+        var deltaX = -this.center.x
+        var deltaY = -this.center.y
+        this.chart.root = this
+        this.chart.translate(deltaX,deltaY)
+    }
+
+
 }

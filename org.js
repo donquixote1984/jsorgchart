@@ -116,6 +116,13 @@ function OrgChart(settings){
 		this.root.render_cascade()
 	}
 
+	this.chroot = function(element){
+		this.root = element
+		this.element.chroot()	
+	}
+	this.translate =function(deltaX,deltaY){
+		this.root.translate(deltaX,deltaY)	
+	}
 }
 
 function getMousePos(canvas, evt) {
