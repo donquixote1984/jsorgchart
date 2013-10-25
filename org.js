@@ -35,13 +35,7 @@ function OrgChart(settings){
 			_chart.root = new Element(data,_chart)
 			_chart.root.visible=true
 			_chart.root.render()
-			//var edge = new Edge(this.root)
 			_chart.root.open()
-			//_chart.root.close()
-			//edge.render_edge()
-			//this.root.render_children()
-			//this.root.next_page()
-			//alert(data)
 			_chart.init_event()
 		})
 		
@@ -55,12 +49,46 @@ function OrgChart(settings){
 	this.init_event = function(){
 		this.init_hover()
 		this.init_click()
+		this.init_mousedown()
+		this.init_mouseup()
+		this.init_dblclick()
 	}
 	this.init_click = function(){
 		var _this = this
 		this.canvas.click(function(e){
 			var p = getMousePos(this,e)
-			_this.root.check_click(p.x-400,p.y-300)
+			var that= this
+			setTimeout(function(){
+				var double = parseInt($(that).data('double'),10)
+				if(double>0){
+					$(that).data('double',double-1)
+					return false
+				}
+				else{
+					console.log("single click")
+					_this.root.check_click(p.x-400,p.y-300)
+				}
+			},300)
+			
+		}).dblclick(function(e){
+			var p = getMousePos(this,e)
+			$(this).data('double',2)
+			console.log("double click")
+			_this.root.check_dblclick(p.x-400,p.y-400)
+		})
+	}
+	this.init_mousedown = function(){
+		var _this = this
+		this.canvas.mousedown(function(e){
+			var p =getMousePos(this,e)
+			_this.root.check_mousedown(p.x-400,p.y-300)
+		})
+	}
+	this.init_mouseup = function(){
+		var _this = this
+		this.canvas.mouseup(function(e){
+			var p =getMousePos(this,e)
+			_this.root.check_mouseup(p.x-400,p.y-300)
 		})
 	}
 	this.init_hover  =function(){
@@ -74,45 +102,20 @@ function OrgChart(settings){
 			}
 		})
 	}
+	this.init_dblclick= function(){
+		var _this =this
+		this.canvas.dblclick(function(e){
+			e.stopPropagation()
+			var p = getMousePos(this,e)
+			 writeMessage(p)
+			_this.root.check_dblclick(p.x-400,p.y-300)
+		})
+	}
 	this.render= function(){
 		this.clear()
 		this.root.render_cascade()
 	}
-	/*this.parse = function(data,index,parent){
-		var p = new Partial()
-		p.parseData(data)
-		p.context = this.context
-		p.parent = parent
-		p.index =index
-		p.chart= this
-		if(p.parent!=null){
-			p.heriachy=p.parent.heriachy+1
-		}	
-		if(p.index<=this.page_size){
-			p.generate_render()	
-		}
-		else {
 
-				p.partial_render = p.parent.children[p.index-this.page_size].partial_render
-				p.partial_render.data = data
-				p.partial_render.partial = p
-		}
-		p.length =0
-		if(p.heriachy>=this.init_heriachy-1)
-			return p
-
-		
-
-		if(data.children!=null){
-			p.length = data.children.length
-			for(var i =0;i<data.children.length;i++){
-				var child = this.parse(data.children[i],i,p)
-				p.children.push(child)
-			}
-		}
-		return p
-
-	}*/
 }
 
 function getMousePos(canvas, evt) {
