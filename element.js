@@ -7,13 +7,13 @@ function drawLine(from,to,context){
     //context.globalCompositeOperation="destination-over"
     context.moveTo(to.center.x,to.center.y)
     context.lineTo(from.center.x,from.center.y)
-    if(from.is_hovered==false){
-        context.lineWidth=1
-        context.strokeStyle = "#cacaca"
+    if(from.is_hovered&&to.is_hovered){
+        context.lineWidth=2
+        context.strokeStyle = "#336699"
     }
     else{
-        context.lineWidth=3
-        context.strokeStyle = "#dadada"
+        context.lineWidth=1
+        context.strokeStyle = "#cacaca"
     }
     
     context.stroke()
@@ -36,7 +36,6 @@ function Element(data,chart){
     this.page_size = 10
     this.hierarchy = 0
     this.max_length = 180
-    this.min_length = 100
     this.parent = null
     this.radius = 35 
     this.is_open = false
@@ -52,6 +51,12 @@ function Element(data,chart){
     this.edge=null
     this.bloom_time = 1
     this.disable = false
+    this.outer_radius = false
+    this.is_center = false
+    this.mouse_down=false
+    this.dragged = false
+    this.mouse_down_position = new Point(0,0)
+    this.hover_flag=false
     this.open = function(){
         var _this = this
 
@@ -104,17 +109,7 @@ function Element(data,chart){
             }
         })
     }
-    this.click = function(){
-        if(this.is_open){
-            this.close()
-        }
-        else{
-            this.open()
-        }
-    }
-    this.request_chart_render=  function(){
 
-    }
     this.hide = function(){
         for(var i =0;i<this.children.length;i++){
             this.children[i].hide()
@@ -169,7 +164,8 @@ function Element(data,chart){
         var angle_unit = 2*Math.PI/(length>this.page_size?this.page_size:length) 
         this.angle_unit = angle_unit
         if(this.parent.parent == null){
-             var _rotation_base = new Point(0,this.max_length)
+             var _rotation_base = new Point(0,this.chart.center_length)
+             this.outer_radius = this.chart.center_length
              if(index == 0){
                 this.angle = angle_unit/2
                 this.center = _rotation_base.rotate(this.parent.center,angle_unit/2) 
@@ -181,7 +177,8 @@ function Element(data,chart){
         }
         else{
             var parent_dist = this.parent.center.dist(this.parent.parent.center)
-            var _rotation_base = this.parent.center.multiply(1-this.min_length/parent_dist)
+            var _rotation_base = this.parent.center.multiply(1-this.chart.line_regression)
+            this.outer_radius = this.parent.outer_radius*this.chart.line_regression
             if(index ==0){
                 this.angle= angle_unit/2
                 this.center= _rotation_base.rotate(this.parent.center,angle_unit/2)
@@ -192,25 +189,23 @@ function Element(data,chart){
             }
         }
     }
-    this.render_children = function(p){
-        if(p==null){
-            p=1
-        }
-        this.chart.clear()
-        start_children_index = (p-1)*this.page_size
-        if(start_children_index>this.children.length){
-            return
-        }
+    this.scaleOut = function(){
+        this.radius = this.radius/this.chart.radius_regression
         for(var i =0;i<this.children.length;i++){
-           if(this.children[i].visible){
-                drawLine(this,this.children[i],this.chart.context)
-                this.children[i].render()
-            }
+            this.children.center.x = this.center.x + (this.children[i].center.x-this.center.x)*(1-this.chart.line_regression)
+            this.children.center.y = this.center.y + (this.children[i].center.y- this.cetner.y)*(1-this.chart.line_regression)
+            this.children[i].scale(s)
         }
-        this.is_edged=true
-        this.render()
-        this.is_open = true
     }
+    this.scaleIn = function(){
+        this.radius = this.radius*this.chart.radius_regression
+        for(var i =0;i<this.children.length;i++){
+            this.children.center.x = this.center.x + (this.children[i].center.x-this.center.x)*(this.chart.line_regression)
+            this.children.center.y = this.center.y + (this.children[i].center.y- this.cetner.y)*(this.chart.line_regression)
+            this.children[i].scale(s)
+        }
+    }
+
     this.close = function(){
         if(this.is_open == false){
             return
@@ -375,6 +370,7 @@ function Element(data,chart){
         gra.addColorStop(0,circle_style.gra_start)
         if(this.is_hovered){
             gra.addColorStop(1,circle_style.gra_hover_stop)
+            context.globalCompositeOperation="source-over"
         }
         else{
             gra.addColorStop(1,circle_style.gra_stop)
@@ -390,41 +386,49 @@ function Element(data,chart){
         context.closePath() 
         context.restore() 
     }
-    this.render_cascade_without_line = function(){
-        
+  
+    this.render_cascade = function(){
         if(this.is_open&&this.children.length>0){
-            
-            for(var i =0;i<this.children.length;i++){
-                if(this.children[i].visible){
-                    //drawLine(this.center,this.children[i].center,this.chart.context)
-                    this.children[i].render_cascade_without_line()
+            var q = []
+            var hovered_root = null
+            q.push(this)
+            if(this.is_hovered) {
+                hovered_root = this
+            }
+            while(q.length>0){
+                var e  = q.shift()
+                    if(e.is_open){
+                        for(var i =0;i<e.children.length;i++){
+                            if(e.children[i].visible){
+                                if(e.children[i].is_hovered&&e.children[i].parent.is_hovered==false){
+                                        hovered_root = e.children[i]
+                                }
+                                    drawLine(e,e.children[i],this.chart.context)
+                                q.push(e.children[i])
+                                
+                            }
+                        } 
+                    }     
+                    if(e.is_hovered==false){
+                        e.render()
+                    }
+                    
+            }
+            if(hovered_root!=null){
+                
+                if(hovered_root.is_open){
+                    for(var i =0;i<hovered_root.children.length;i++){
+                        if(hovered_root.children[i].visible){
+                            drawLine(hovered_root,hovered_root.children[i],this.chart.context)
+                            hovered_root.children[i].render()                          
+                        }
+
+                    }
                 }
+                hovered_root.render()
             }
         }
-        this.render()
     }
-    this.render_cascade = function(){
-
-        this.render_cascade_children()
-         this.render()        
-    }
-    this.render_cascade_children = function(){
-        if(this.is_open&&this.children.length>0){
-           for(var i =0;i<this.children.length;i++){
-                if(this.children[i].visible&&this.children[i].is_hovered==false){
-                    drawLine(this,this.children[i],this.chart.context)
-                    this.children[i].render_cascade()
-                }
-            } 
-            for(var i =0;i<this.children.length;i++){
-                if(this.children[i].visible&&this.children[i].is_hovered){
-                    drawLine(this,this.children[i],this.chart.context)
-                    this.children[i].render_cascade()
-                }
-            }
-        }   
-    }
-
     this.is_in_area = function(x,y){
         var r = Math.sqrt((this.center.x-x)*(this.center.x-x)+(this.center.y-y)*(this.center.y-y))
         if(r<=this.radius){
@@ -446,9 +450,6 @@ function Element(data,chart){
     this.hover = function(){
         this.chart.canvas.addClass("cursor")
         this.mark_hover()
-        //this.chart.clear()
-        //this.chart.render()
-        //this.render_cascade()
     }
     this.unhover = function(){
         if(this.is_hovered==true){
@@ -473,6 +474,7 @@ function Element(data,chart){
                     if(this.edge.right==false){
                         this.edge.mark_right()
                         this.hover()
+                        this.hover_flag = true
                         unchange=false
                     }
                 }
@@ -480,6 +482,7 @@ function Element(data,chart){
                     if(this.edge.left==false){
                         this.edge.mark_left()
                         this.hover()  
+                        this.hover_flag = true
                         unchange=false
                     }
                 }
@@ -488,23 +491,40 @@ function Element(data,chart){
                if(this.edge.hover==true){
                     this.edge.unmark()
                     this.hover() 
+                    this.hover_flag=true
                     unchange=false
+               }
+               else{
+                if(this.is_hovered==false){
+                    this.hover()
+                    this.hover_flag=true
+                    unchange=false
+                }
                }
             }
             else{
                 if(this.edge.hover){
                     this.unhover()
+                    this.hover_flag=false
                     unchange=false
                 }
-                if(this.is_hovered){
-                    this.unhover()
-                    unchange=false
+                if(this.is_hovered){//&&this.parent!=null&&this.parent.is_hovered==false){
+                    if(this.parent!=null&&this.parent.is_hovered){
+                        //done nothing
+                    }
+                    else{
+                        this.unhover()
+                        this.hover_flag=false
+                        unchange=false
+                    }
+
                 }
             }
         }
         else if(this.is_in_area(x,y)){
             if(this.is_hovered==false){
                 this.hover()
+                this.hover_flag=true
                 unchange=false
             }
         }
@@ -515,8 +535,10 @@ function Element(data,chart){
                 }
                 else{
                     this.unhover()
+                    this.hover_flag=false
+                   unchange=false
                 }
-                unchange=false
+
             }
         }
         //this.check_edge(x,y)
@@ -524,10 +546,32 @@ function Element(data,chart){
             for(var i =0;i<this.children.length;i++){
                if(this.children[i].visible) {
                     unchange = unchange & this.children[i].check_hover(x,y)
+                        //this.unhover()
+                        //this.hover_flag=true
+                        //console.log("unhover")
                }
             }
         }
         return unchange
+    }
+    this.check_drag = function(x,y){
+        var no_dragged = true
+        if(this.mouse_down){
+            if(x!= this.center.x || y!=this.center.y){
+                //drag the fuck
+                var deltaX = x-this.center.x 
+                var deltaY = y - this.center.y 
+                this.chart.translate(deltaX,deltaY)
+                no_dragged = false
+                this.dragged= true
+            }
+        }
+        if(this.is_open){
+            for(var i =0;i<this.children.length;i++){
+                no_dragged = no_dragged && this.children[i].check_drag(x,y)
+            }
+        }
+        return no_dragged
     }
     this.check_mousedown = function(x,y){
        if(this.is_edged) {
@@ -540,6 +584,16 @@ function Element(data,chart){
             }
         }
        }
+       if(this.is_in_area(x,y)){
+            this.mouse_down = true
+           this.mouse_down_position = new Point(this.center.x,this.center.y)
+
+       }
+       if(this.is_open){
+        for(var i =0;i<this.children.length;i++){
+            this.children[i].check_mousedown(x,y)
+        }
+       }
     }
     this.check_mouseup = function(x,y){
         if(this.is_edged) {
@@ -547,9 +601,23 @@ function Element(data,chart){
                 clearInterval(this.timer)
             }
        }
+       if(this.is_in_area(x,y)){
+            this.mouse_down = false
+       }
+       if(this.is_open){
+        for(var i =0;i<this.children.length;i++){
+            this.children[i].check_mouseup(x,y)
+        }
+       }
     }
     this.check_click = function(x,y){
+         this.mouse_down = false
         if(this.is_in_area(x,y)){
+            if(this.center.x!=this.mouse_down_position.x||this.center.y!=this.mouse_down_position.y){
+                this.mouse_down_position = null
+                return
+            }
+            this.mouse_down_position = null
             // the fuck open
             if(this.is_open){
                 this.close()
@@ -571,10 +639,10 @@ function Element(data,chart){
         var width = this.chart.width/2+this.radius
         var height = this.chart.height/2+this.radius
 
-        if(Math.abs(this.chart.center.x)>width){
+        if(Math.abs(this.center.x)>width){
             return false
         }
-        if(Math.abs(this.chart.center.y)>height){
+        if(Math.abs(this.center.y)>height){
             return false
         }
 

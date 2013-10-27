@@ -26,9 +26,15 @@ function OrgChart(settings){
 	this.center_radius = settings.center_radius
 	this.center_line_length = settings.center_line_length
 	this.root = null
-	this.radius_regression = 0.75
+	this.radius_regression = 0.785
+	this.line_regression = 0.61
+	this.center_radius = 35
+	this.center_length = 180
 	this.page_size=settings.page_size==null?10:settings.page_size
 	this.bezier =new KeySpline(0.19,0.64,0.35,0.76)
+	this.zoom = 0
+	this.translateX = 0
+	this.translateY =0
 	this.init = function(){
 		var _chart= this
 		$.getJSON("http://localhost:8000/first/",function(data){
@@ -81,6 +87,7 @@ function OrgChart(settings){
 		var _this = this
 		this.canvas.mousedown(function(e){
 			var p =getMousePos(this,e)
+			e.stopPropagation()
 			_this.root.check_mousedown(p.x-400,p.y-300)
 		})
 	}
@@ -98,7 +105,10 @@ function OrgChart(settings){
 			 writeMessage(p)
 			if(!_this.root.check_hover(p.x-400,p.y-300)){
 				_this.render()
+			}
+			if(!_this.root.check_drag(p.x-400,p.y-300)){
 
+				_this.render()
 			}
 		})
 	}
@@ -121,7 +131,18 @@ function OrgChart(settings){
 		this.element.chroot()	
 	}
 	this.translate =function(deltaX,deltaY){
+		this.translateX+=deltaX
+		this.translateY+=deltaY
 		this.root.translate(deltaX,deltaY)	
+	}
+
+	this.zoomin = function(){
+		this.zoom+=1
+		this.root.scaleIn()
+	}
+	this.zoomout =function(){
+		this.zoom-=1
+		this.root.scaleOut()
 	}
 }
 
