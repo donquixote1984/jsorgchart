@@ -57,6 +57,7 @@ function Element(data,chart){
     this.dragged = false
     this.mouse_down_position = new Point(0,0)
     this.hover_flag=false
+    this.origin_center= new Point(-9999,-9999)
     this.open = function(){
         var _this = this
 
@@ -546,9 +547,6 @@ function Element(data,chart){
             for(var i =0;i<this.children.length;i++){
                if(this.children[i].visible) {
                     unchange = unchange & this.children[i].check_hover(x,y)
-                        //this.unhover()
-                        //this.hover_flag=true
-                        //console.log("unhover")
                }
             }
         }
@@ -586,8 +584,7 @@ function Element(data,chart){
        }
        if(this.is_in_area(x,y)){
             this.mouse_down = true
-           this.mouse_down_position = new Point(this.center.x,this.center.y)
-
+            this.mouse_down_position = new Point(this.center.x,this.center.y)
        }
        if(this.is_open){
         for(var i =0;i<this.children.length;i++){
@@ -609,6 +606,7 @@ function Element(data,chart){
             this.children[i].check_mouseup(x,y)
         }
        }
+       this.mouse_down_position = null
     }
     this.check_click = function(x,y){
          this.mouse_down = false
@@ -645,7 +643,6 @@ function Element(data,chart){
         if(Math.abs(this.center.y)>height){
             return false
         }
-
         return true
     }
 
@@ -655,6 +652,4 @@ function Element(data,chart){
         this.chart.root = this
         this.chart.translate(deltaX,deltaY)
     }
-
-
 }

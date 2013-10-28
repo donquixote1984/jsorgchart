@@ -35,16 +35,53 @@ function OrgChart(settings){
 	this.zoom = 0
 	this.translateX = 0
 	this.translateY =0
+	this.eye_raidus = 35
+	this.eye = new Point(0,0)
+	this.eye_hovered= false
+
+	this.eye_element=null
+	this.eye_element_active= null
 	this.init = function(){
 		var _chart= this
+
 		$.getJSON("http://localhost:8000/first/",function(data){
 			_chart.root = new Element(data,_chart)
+			_chart.eye_element=_chart.root
 			_chart.root.visible=true
 			_chart.root.render()
 			_chart.root.open()
 			_chart.init_event()
 		})
 		
+	}
+	this.init_eye = function(){
+		this.context.save()
+		this.context.shadowBlur = 3;
+
+		if(this.eye_hovered){
+			this.context.strokeStyle="#ccc"
+			this.context.shadowColor="#333"
+			this.context.lineWidth=4
+		}
+		else{
+			this.context.strokeStyle = "#ccc"
+			this.context.shadowColor = "#336699";			
+			this.context.lineWidth=2
+		}
+		for(var i =0;i<20;i++){
+			var angle_start = i*2*Math.PI/20
+			var angle_end = angle_start+2*Math.PI/20
+			if(i%2==0){
+				this.context.beginPath()
+				this.context.arc(0,0,this.eye_raidus,angle_start,angle_end,false)
+				this.context.stroke()
+				this.context.closePath()
+			}
+			
+		}
+		
+		this.context.closePath()
+		this.context.restore()
 	}
 	this.clear = function(){
 		var context=this.context
@@ -123,6 +160,7 @@ function OrgChart(settings){
 	}
 	this.render= function(){
 		this.clear()
+		this.init_eye()
 		this.root.render_cascade()
 	}
 
@@ -143,6 +181,18 @@ function OrgChart(settings){
 	this.zoomout =function(){
 		this.zoom-=1
 		this.root.scaleOut()
+	}
+	this.check_eye = function(){
+		var nearest=  9999
+		var dist = this.root.center.dist(this.eye)
+		if(dist<this.root.radius+this.eye_raidus){
+			nearest = dist
+		}
+		for(var i =0;i<this.root.children.length;i++){
+			if(this.root.children[i].check_bound()){
+				this.root.children[i].check_eye()
+			}
+		}
 	}
 }
 
