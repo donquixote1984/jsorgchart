@@ -182,18 +182,6 @@ function OrgChart(settings){
 		this.zoom-=1
 		this.root.scaleOut()
 	}
-	this.check_eye = function(){
-		var nearest=  9999
-		var dist = this.root.center.dist(this.eye)
-		if(dist<this.root.radius+this.eye_raidus){
-			nearest = dist
-		}
-		for(var i =0;i<this.root.children.length;i++){
-			if(this.root.children[i].check_bound()){
-				this.root.children[i].check_eye()
-			}
-		}
-	}
 }
 
 function getMousePos(canvas, evt) {

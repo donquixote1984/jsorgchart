@@ -652,4 +652,28 @@ function Element(data,chart){
         this.chart.root = this
         this.chart.translate(deltaX,deltaY)
     }
+    this.check_eye = function(point,r){
+        var p=[]
+        p.push(this)
+        var nearest=9999
+        var eye_node = null
+        while(p.length>0){
+            var e = p.unshift()
+            var dist=e.center.dist(point,r)
+            if(dist<nearest){
+                nearest=dist
+                eye_node = e
+            }
+            if(e.is_open){
+                for(var i =0;i<this.children.length;i++){
+                    var chlid = this.children[i]
+                    if(child.check_bound()&&child.visible){
+                        p.push(child)
+                    }
+                }
+            }
+
+        }
+        return eye_node
+    }
 }
