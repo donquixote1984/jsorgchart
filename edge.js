@@ -2,7 +2,6 @@ function Edge(element){
     this.radius = element.radius*1.2
     this.center = element.center
     this.element = element
-    this.hover= false
     this.right=false
     this.left= false
     this.render= function(center){
@@ -52,32 +51,19 @@ function Edge(element){
     this.mark_left = function(){
       this.right = false
       this.left = true
-      this.hover=true
+      this.is_hovered=true
     }
     this.mark_right = function(){
       this.right=true
       this.left =false
-      this.hover=true
+      this.is_hovered=true
     }
     this.unmark = function(){
       this.right=false
       this.left=false
-      this.hover=false
+      this.is_hovered=false
     }
-    this.check_hover = function(x,y){
-        if(this.is_in_edge(x,y))
-            this.hover=  true
-            if(x>this.center.x){
-                this.right= true
-                this.left = false
-                
-            }
-            else{
-                this.left = true
-                this.right=false
-            }
-        this.element.render()
-    }
+   
     this.is_in_edge = function(x,y){
         var dist = (x - this.center.x)*(x-this.center.x) + (y-this.center.y)*(y-this.center.y)
         if(dist>this.element.radius*this.element.radius&&dist<this.radius*this.radius){
@@ -87,14 +73,7 @@ function Edge(element){
           return false
         }
     }
-    this.hoveroff= function(p){
-        if(this.hover==true){
-            this.hover= false
-            this.left=false
-            this.right =false
-            //this.render()
-        }
-    }
+
     this.click =function(){
         if(this.right==true){
             this.next()
@@ -108,5 +87,27 @@ function Edge(element){
     }
     this.prev = function(){
         this.element.prev_page()
+    }
+
+    this.check_hover = function(x,y){
+      if(this.is_in_edge(x,y)){
+          if(x>=this.center.x){
+              if(this.right==false){
+                  this.mark_right()
+              }
+          }
+          else{
+              if(this.left==false){
+                  this.mark_left()
+              }
+          }
+          this.element.hover()
+          return true
+      }
+      else{
+        this.unmark()
+        return false
+      }
+      
     }
 }

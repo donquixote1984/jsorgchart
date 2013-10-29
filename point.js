@@ -26,4 +26,7 @@ function Point(x,y){
 				(this.x-p.x)*(this.x-p.x) + (this.y-p.y)*(this.y-p.y)
 			)
 	}
+	this.equals = function(p){
+		return this.center.x==p.x&&this.center.y==p.y
+	}
 }

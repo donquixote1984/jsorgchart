@@ -22,7 +22,6 @@ function drawLine(from,to,context){
 }
 
 function Element(data,chart){
-    this.id = data.id
     this.text = data.text
     this.image_loaded=false
     this.image =new Image()
@@ -31,13 +30,13 @@ function Element(data,chart){
         this.image_loaded = true
     }
     this.chart = chart
-    this.center=  new Point(0,0)
+    
     this.children =[]
     this.page_size = 10
     this.hierarchy = 0
     this.max_length = 180
     this.parent = null
-    this.radius = 35 
+     
     this.is_open = false
     this.pin = false
     this.visible = false
@@ -45,15 +44,14 @@ function Element(data,chart){
     this.page = 0
     this.angle = 0
     this.angle_unit = 0
-    this.timer = null
-    this.is_hovered= false
+    
     this.is_edged = false
     this.edge=null
     this.bloom_time = 1
     this.disable = false
     this.outer_radius = false
     this.is_center = false
-    this.mouse_down=false
+    
     this.dragged = false
     this.mouse_down_position = new Point(0,0)
     this.hover_flag=false
@@ -423,7 +421,6 @@ function Element(data,chart){
                             drawLine(hovered_root,hovered_root.children[i],this.chart.context)
                             hovered_root.children[i].render()                          
                         }
-
                     }
                 }
                 hovered_root.render()
@@ -453,7 +450,7 @@ function Element(data,chart){
         this.mark_hover()
     }
     this.unhover = function(){
-        if(this.is_hovered==true){
+        this.is_hovered
             this.chart.canvas.removeClass("cursor")
             this.is_hovered= false
             for(var i =0;i<this.children.length;i++){
@@ -465,18 +462,17 @@ function Element(data,chart){
                 this.edge.unmark()
             //this.chart.render()
         }
-
     }
     this.check_hover = function(x,y){
-        var unchange = true
+        var hover_element = null
         if(this.is_edged){
             if(this.edge.is_in_edge(x,y)){
                 if(x>=this.edge.center.x){
                     if(this.edge.right==false){
                         this.edge.mark_right()
                         this.hover()
+                        this.chart.hover_element = this
                         this.hover_flag = true
-                        unchange=false
                     }
                 }
                 else{
@@ -484,9 +480,9 @@ function Element(data,chart){
                         this.edge.mark_left()
                         this.hover()  
                         this.hover_flag = true
-                        unchange=false
                     }
                 }
+                hover_element = this
             }
             else if(this.is_in_area(x,y)){
                if(this.edge.hover==true){
@@ -543,13 +539,6 @@ function Element(data,chart){
             }
         }
         //this.check_edge(x,y)
-        if(this.is_open){
-            for(var i =0;i<this.children.length;i++){
-               if(this.children[i].visible) {
-                    unchange = unchange & this.children[i].check_hover(x,y)
-               }
-            }
-        }
         return unchange
     }
     this.check_drag = function(x,y){
@@ -562,6 +551,12 @@ function Element(data,chart){
                 this.chart.translate(deltaX,deltaY)
                 no_dragged = false
                 this.dragged= true
+                /*if(this.chart.root.check_eye(this.chart.eye,this.chart.eye_radius)!=null){
+                    this.chart.eye_hovered =true
+                }
+                else{
+                    this.chart.eye_hovered=false
+                }*/
             }
         }
         if(this.is_open){
@@ -572,26 +567,40 @@ function Element(data,chart){
         return no_dragged
     }
     this.check_mousedown = function(x,y){
-       if(this.is_edged) {
-        if(this.edge.is_in_edge(x,y)){
-            if(this.edge.right){
-                this.next_page()
+        if(this.visible==false)
+            return
+        var q= []
+        q.push(this)
+        while(q.length>0){
+            var e = q.shift()
+
+            if(q.is_open){
+                for(var i=0;i<e.children.length;i++){
+                    if(e.children[i].visible&&e.children[i].check_bound()){
+                        q.push(e)
+                    }
+                }
             }
-            else{
-                this.prev_page()
+
+            if(e.is_edged){
+                if(e.edge.is_in_edge(x,y)){
+                    if(e.edge.right){
+                        e.next_page()
+                    }
+                    else{
+                        e.prev_page()
+                    }
+                }
             }
+            if(e.is_in_area(x,y)){
+                e.chart.active_element = e
+                e.mouse_down = true
+                e.mouse_down_position = new Point(e.center.x,e.center.y)
+            }
+
         }
-       }
-       if(this.is_in_area(x,y)){
-            this.mouse_down = true
-            this.mouse_down_position = new Point(this.center.x,this.center.y)
-       }
-       if(this.is_open){
-        for(var i =0;i<this.children.length;i++){
-            this.children[i].check_mousedown(x,y)
-        }
-       }
     }
+
     this.check_mouseup = function(x,y){
         if(this.is_edged) {
             if(this.edge.is_in_edge(x,y)){
@@ -606,7 +615,6 @@ function Element(data,chart){
             this.children[i].check_mouseup(x,y)
         }
        }
-       this.mouse_down_position = null
     }
     this.check_click = function(x,y){
          this.mouse_down = false
@@ -658,15 +666,18 @@ function Element(data,chart){
         var nearest=9999
         var eye_node = null
         while(p.length>0){
-            var e = p.unshift()
-            var dist=e.center.dist(point,r)
-            if(dist<nearest){
-                nearest=dist
-                eye_node = e
+            var e = p.shift()
+            var dist=e.center.dist(point)
+            if(dist<e.radius+r){
+                if(dist<nearest){
+
+                    nearest=dist
+                    eye_node = e
+                }        
             }
             if(e.is_open){
                 for(var i =0;i<this.children.length;i++){
-                    var chlid = this.children[i]
+                    var child = this.children[i]
                     if(child.check_bound()&&child.visible){
                         p.push(child)
                     }
