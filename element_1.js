@@ -296,7 +296,14 @@ function Element(chart){
     }
 
 
-
+    this.click = function(){
+        if(this.is_open){
+            this.close()
+        }
+        else{
+            this.open()
+        }
+    }
     this.is_in_area = function(x,y){
         var r = Math.sqrt((this.center.x-x)*(this.center.x-x)+(this.center.y-y)*(this.center.y-y))
         if(r<=this.radius){
@@ -305,5 +312,98 @@ function Element(chart){
         else{
             return false
         }
+    }
+    this.mousedown = function(){
+        if(this.edge!=null){
+            if(this.edge.is_hovered){
+                this.edge.mousedown()
+            }
+        }
+    }
+    this.mouseup = function(){
+
+    }
+    this.toString = function(){
+        return "Element"
+    }
+
+        this.next_page = function(){
+        var _this = this
+        var rotate_unit = -Math.PI/20
+        var rotate_counter= 0
+        clearInterval(this.timer)
+        this.timer = setInterval(function(){
+            var last_children = _this.last_children()
+            if(last_children==null||last_children.visible){
+                clearInterval(this.timer)
+            }
+            else{
+                _this.rotate_children(rotate_unit)
+                _this.chart.render()                
+            }
+
+        },33)
+    }
+    this.prev_page = function(){
+        var _this = this
+        var rotate_unit = Math.PI/20
+        var rotate_counter= 0
+        clearInterval(this.timer)
+        this.timer = setInterval(function(){
+            var first_children = _this.first_children()
+            if(first_children == null||first_children.angle>=first_children.angle_unit/2){
+                clearInterval(this.timer)
+            }
+            else{
+                _this.rotate_children(rotate_unit)
+                _this.chart.render()                
+            }
+        },33)
+    }
+
+    this.last_children =function(){
+        if(this.children.length>0){
+            return this.children[this.children.length-1]
+        }
+        else {
+            return null
+        }
+    }
+    this.first_children =function(){
+        if(this.children.length>0){
+            return this.children[0]
+        }
+        else {
+            return null
+        }
+    }
+
+
+    this.rotate = function(angle,center){
+        var _center = center
+        if(_center==null){
+            _center=this.parent.center
+        }
+        this.center = this.center.rotate(_center,angle)
+        for(var i =0;i<this.children.length;i++){
+            this.children[i].rotate(angle,_center)
+        }
+        this.angle += angle
+    }
+
+
+    this.translate = function(deltaX,deltaY){
+        this.center.x += deltaX
+        this.center.y +=deltaY
+        for(var i =0 ;i<this.children.length;i++){
+            this.children[i].translate(deltaX,deltaY)
+        }
+    }
+    this.check_eye = function(){
+        var dist =this.center.dist(this.chart.eye)
+        if(dist<this.radius+this.chart.eye_radius){
+            return dist
+        }
+        return -1
     }
 }

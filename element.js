@@ -7,7 +7,7 @@ function drawLine(from,to,context){
     //context.globalCompositeOperation="destination-over"
     context.moveTo(to.center.x,to.center.y)
     context.lineTo(from.center.x,from.center.y)
-    if(from.is_hovered&&to.is_hovered){
+    if(from.is_hovered){
         context.lineWidth=2
         context.strokeStyle = "#336699"
     }

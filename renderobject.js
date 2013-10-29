@@ -13,4 +13,5 @@ function RenderObject(chart){
 	this.is_in_area = function(){}
 	this.check_bound = function(){}
 	this.mark_hover = function(){}
+	this.toString = function(){return "RenderObject"}
 }

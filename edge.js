@@ -110,4 +110,15 @@ function Edge(element){
       }
       
     }
+    this.mousedown = function(){
+        if(this.right){
+            this.element.next_page()
+        }
+        else{
+            this.element.prev_page()
+        }
+    }
+    this.toString = function(){
+      return "Edge"
+    }
 }

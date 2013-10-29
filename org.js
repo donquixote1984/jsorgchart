@@ -7,7 +7,7 @@ function drawLine(from,to,context){
     //context.globalCompositeOperation="destination-over"
     context.moveTo(to.center.x,to.center.y)
     context.lineTo(from.center.x,from.center.y)
-    if(from.is_hovered&&to.is_hovered){
+    if(from.is_hovered){
         context.lineWidth=2
         context.strokeStyle = "#336699"
     }
@@ -30,7 +30,7 @@ var circle_style = {
 				shadowColor: '2e2e2e',
 				borderWidth:5
 		}
-
+tackle = 10
 function OrgChart(settings){
 	this.id = settings.id
 	this.canvas = $("#"+this.id)
@@ -58,11 +58,16 @@ function OrgChart(settings){
 	this.translateY =0
 	this.eye_radius = 35
 	this.eye = new Point(0,0)
-	this.eye_hovered= false
+	this.eye_hover= null
 
 	this.eye_element=null
 	this.hover_element = null
-	this.is_mouse_down = false
+	this.mouse_down_edge = null
+	this.mouse_down_element=null
+	this.mousedownX=null
+	this.mousedownY=null
+	this.is_dragged=false
+	this.framecontrol = null
 	this.init = function(){
 		Element.prototype = new RenderObject(this)
 		Edge.prototype = new RenderObject(this)
@@ -78,11 +83,21 @@ function OrgChart(settings){
 		})
 		
 	}
+	this.add_mousedown_element = function(e){
+		this.mouse_down_element = e
+		this.mousedownX= e.center.x
+		this.mousedownY=e.center.y
+	}
+	this.remove_mousedown_element = function(e){
+		this.mouse_down_element = null
+		this.mousedownX = null
+		this.mousedownY = null
+	}
 	this.init_eye = function(){
 		this.context.save()
 		this.context.shadowBlur = 3;
 
-		if(this.eye_hovered){
+		if(this.eye_hover!=null){
 			this.context.strokeStyle="#ccc"
 			this.context.shadowColor="#333"
 			this.context.lineWidth=4
@@ -115,9 +130,9 @@ function OrgChart(settings){
 	}
 	this.init_event = function(){
 		this.init_hover()
-		//this.init_click()
-		//this.init_mousedown()
-		//this.init_mouseup()
+		this.init_click()
+		this.init_mousedown()
+		this.init_mouseup()
 		//this.init_dblclick()
 	}
 	this.init_click = function(){
@@ -132,15 +147,13 @@ function OrgChart(settings){
 					return false
 				}
 				else{
-					console.log("single click")
-					_this.root.check_click(p.x-400,p.y-300)
+					_this.on_click(p.x-400,p.y-300)
 				}
 			},300)
 			
 		}).dblclick(function(e){
 			var p = getMousePos(this,e)
 			$(this).data('double',2)
-			console.log("double click")
 			_this.root.check_dblclick(p.x-400,p.y-400)
 		})
 	}
@@ -149,16 +162,14 @@ function OrgChart(settings){
 		this.canvas.mousedown(function(e){
 			var p =getMousePos(this,e)
 			e.stopPropagation()
-			_this.is_mouse_down =true
-			_this.root.check_mousedown(p.x-400,p.y-300)
+			_this.on_mousedown(p.x-400,p.y-300)
 		})
 	}
 	this.init_mouseup = function(){
 		var _this = this
 		this.canvas.mouseup(function(e){
 			var p =getMousePos(this,e)
-			_this.is_mouse_down=false
-			_this.root.check_mouseup(p.x-400,p.y-300)
+			_this.on_mouseup(p.x-400,p.y-300)
 			//_this.root.check_drag_position(p.x-400,p.y-300)
 		})
 	}
@@ -167,13 +178,84 @@ function OrgChart(settings){
 		this.canvas.mousemove(function(e){
 			var p = getMousePos(this,e)
 			 writeMessage(p)
-			 if(this.is_mouse_down){
+			 if(_this.mouse_down_element!=null){
 			 	_this.on_drag(p.x-400,p.y-300)
 			 }
 			 else{
+
 			 	_this.on_hover(p.x-400,p.y-300)
 			 }
 		})
+	}
+	this.on_mousedown = function(x,y){
+		var q = []
+		q.push(this.root)
+		while(q.length>0){
+			var e =q.shift()
+			if(e.edge!=null){
+				if(e.edge.is_in_edge(x,y)){
+					e.edge.mousedown()
+					this.mouse_down_edge=e.edge
+					break;
+				}
+			}
+			if(e.is_in_area(x,y)){
+				this.add_mousedown_element(e)
+				this.framecontrol = new Point(e.center.x,e.center.y)
+			}
+			if(e.is_open){
+				for(var i = 0;i<e.children.length;i++){
+					if(e.children[i].visible&&e.children[i].check_bound()){
+						q.push(e.children[i])
+					}
+				}
+			}
+		}
+
+	}
+	this.on_mouseup = function(x,y){
+		var q =[]
+		if(this.mouse_down_edge!=null){
+			clearInterval(this.mouse_down_edge.element.timer)
+			this.mouse_down_edge = null
+		}
+		this.remove_mousedown_element()
+		this.framecontrol= null
+		console.log(this.eye_hover)
+		if(this.eye_hover!=null){
+
+		}
+		else{
+
+			if(this.is_dragged){
+				this.revert()
+			}
+		}
+		this.eye_hover = null
+	}
+	this.on_click =function(x,y){
+		if(this.is_dragged){
+			this.is_dragged=false
+			return
+		}
+		this.remove_mousedown_element()
+		var q = []
+		q.push(this.root)
+		while(q.length>0){
+			var e = q.shift()
+			if(e.is_in_area(x,y)){
+				e.click()
+				break
+			}
+			if(e.is_open){
+				for(var i =0;i<e.children.length;i++){
+					if(e.children[i].check_bound()&&e.children[i].visible){
+						q.push(e.children[i])
+					}
+				}
+			}
+			
+		}
 	}
 
 	this.on_hover = function(x,y){
@@ -190,7 +272,7 @@ function OrgChart(settings){
 			}
 			var check_hover_element = e.check_hover(x,y)
 			if(check_hover_element!=null){
-				hover_e = e
+				hover_e = check_hover_element
 			}
 		}
 		if(hover_e!=null){
@@ -201,24 +283,60 @@ function OrgChart(settings){
 		}
 		var prev_node = this.hover_element
 		var current_node = hover_e
+		this.hover_element = current_node
 		if(prev_node==null&&current_node==null){
 			//donothing	
 		}
 		else if((prev_node&&current_node)==null&&(prev_node||current_node)!=null){
 			this.render()
 		}
-		else if(prev_node.constructor!=current_node.constructor){
+		else if(prev_node.toString()!=current_node.toString()){
 			this.render()			
 		}
 		else{
-			if(!prev_node.equals(current_node)){
+			if(!prev_node.center.equals(current_node.center)){
 				this.render()
 			}
 		}
 	}
 
-	this.on_drag = function(){
-
+	this.on_drag = function(x,y){
+		this.is_dragged =true
+		if(this.mouse_down_element==null){
+			return
+		}
+		var deltaX =x - this.mouse_down_element.center.x
+		var deltaY =y - this.mouse_down_element.center.y
+		this.translate(deltaX,deltaY)
+		this.check_eye()
+		var dist = (x-this.framecontrol.x)*(x-this.framecontrol.x) + (y-this.framecontrol.y)*(y-this.framecontrol.y)
+		if(dist>300){
+			this.framecontrol = new Point(x,y)
+			this.render()
+		}
+	}
+	this.check_eye = function(){
+		var q = []
+		q.push(this.root)
+		var min_dist= 9999
+		this.eye_hover=null
+		while(q.length>0){
+			var e = q.shift()
+			var dist = e.check_eye()
+			if(dist>0){
+				if(min_dist>dist){
+					min_dist = dist
+					this.eye_hover = e
+				}
+			}
+			if(e.is_open){
+				for(var i = 0;i<e.children.length;i++){
+					if(e.children[i].check_bound()&&e.children[i].visible){
+						q.push(e.children[i])
+					}
+				}
+			}
+		}
 	}
 	this.init_dblclick= function(){
 		var _this =this
@@ -248,9 +366,11 @@ function OrgChart(settings){
 				for(var i =0 ;i<e.children.length;i++){
 					if(e.children[i].visible&&e.children[i].check_bound()){
 						drawLine(e,e.children[i],this.context)
-						q.push(e.children[i])
 						if(e.children[i].is_hovered){
 							hover_element  =e.children[i]
+						}
+						else{
+							q.push(e.children[i])
 						}
 					}
 				}
@@ -258,17 +378,19 @@ function OrgChart(settings){
 			if(e.is_hovered==false){
 				e.render()
 			}
-			if(hover_element!=null){
-				hover_element.render()		
+		}
+
+		if(hover_element!=null){
+				
 				if(hover_element.is_open){
 					for(var i =0 ;i<hover_element.children.length;i++){
-						if(hover_element.children[i].visible){
+						if(hover_element.children[i].visible&&hover_element.children[i].check_bound()){
 							drawLine(hover_element,hover_element.children[i],this.context)
 							hover_element.children[i].render()
 						}
 					}
 				}
-			}
+				hover_element.render()		
 		}
 	}
 
@@ -280,6 +402,7 @@ function OrgChart(settings){
 		this.translateX+=deltaX
 		this.translateY+=deltaY
 		this.root.translate(deltaX,deltaY)	
+
 	}
 
 	this.zoomin = function(){
