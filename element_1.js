@@ -406,4 +406,17 @@ function Element(chart){
         }
         return -1
     }
+
+    this.drillDown = function(){
+        this.radius  = this.radius/this.chart.radius_regression
+        var k = this.chart.line_regression
+        if(this.parent!=null){
+            this.center.x = this.parent.center.x+(this.center.x-this.parent.center.x)/k
+            this.center.y = this.parent.center.y+(this.center.y-this.parent.center.y)/k
+            console.log("center:"+this.center.x+" "+this.center.y)
+        }
+        for(var i =0;i<this.children.length;i++){
+            this.children[i].drillDown()
+        }
+    }
 }

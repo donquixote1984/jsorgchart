@@ -56,7 +56,7 @@ function OrgChart(settings){
 	this.zoom = 0
 	this.translateX = 0
 	this.translateY =0
-	this.eye_radius = 35
+	this.eye_radius =30 
 	this.eye = new Point(0,0)
 	this.eye_hover= null
 
@@ -68,6 +68,12 @@ function OrgChart(settings){
 	this.mousedownY=null
 	this.is_dragged=false
 	this.framecontrol = null
+	this.timer = null
+	this.adapt_time = 1
+
+	this.center_element = null
+	this.zoom = 0
+
 	this.init = function(){
 		Element.prototype = new RenderObject(this)
 		Edge.prototype = new RenderObject(this)
@@ -76,6 +82,7 @@ function OrgChart(settings){
 			_chart.root = new Element(_chart)
 			_chart.root.init(data)
 			_chart.eye_element=_chart.root
+			_chart.center_element=_chart.root
 			_chart.root.visible=true
 			_chart.root.render()
 			_chart.root.open()
@@ -219,19 +226,65 @@ function OrgChart(settings){
 			clearInterval(this.mouse_down_edge.element.timer)
 			this.mouse_down_edge = null
 		}
-		this.remove_mousedown_element()
-		this.framecontrol= null
-		console.log(this.eye_hover)
 		if(this.eye_hover!=null){
-
+			this.adapt()
 		}
 		else{
-
 			if(this.is_dragged){
 				this.revert()
 			}
 		}
+		this.remove_mousedown_element()
+		this.framecontrol= null
 		this.eye_hover = null
+	}
+	this.revert = function(){
+		var deltaX = this.mousedownX -this.mouse_down_element.center.x 
+		var deltaY = this.mousedownY -this.mouse_down_element.center.y
+		var dist = this.mouse_down_element.center.dist(new Point(this.mousedownX,this.mousedownY))
+		var t_step = 0.1/this.adapt_time
+	     var t =0
+	     var max_walk = this.bezier.get(this.adapt_time)
+	     var walk_rate = dist/max_walk
+	     var _this = this
+		this.timer = setInterval(function(){
+			 var k = _this.bezier.get(t)/max_walk
+			 _this.translate(deltaX*k,deltaY*k)
+			 t+=t_step
+			 _this.render()
+			 _this.translate(-deltaX*k,-deltaY*k)
+			 if(t>_this.adapt_time){
+			 	clearInterval(_this.timer)
+			 	_this.translate(deltaX,deltaY)
+			 	_this.render()
+			 }
+		},1000/60)
+		//this.translate(deltaX,deltaY)
+		
+	}
+	this.adapt = function(){
+		if(this.center_element == null){
+			return
+		}
+
+		if(this.eye_hover == this.center_element){
+			this.drillDown()
+		}
+		else if(this.eye_hover.hierarchy<this.center_element.hierarchy){
+			console.log("drillup")
+			this.drillUp()
+		}
+		else if(this.eye_hover.hierarchy>this.center_element.hierarchy){
+			console.log("drilldown")
+			this.drillDown()
+		}
+		var deltaX =  - this.eye_hover.center.x
+		var deltaY =  - this.eye_hover.center.y
+
+		this.translate(deltaX,deltaY)
+		this.center_element = this.eye_hover
+
+		this.render()
 	}
 	this.on_click =function(x,y){
 		if(this.is_dragged){
@@ -404,14 +457,11 @@ function OrgChart(settings){
 		this.root.translate(deltaX,deltaY)	
 
 	}
-
-	this.zoomin = function(){
-		this.zoom+=1
-		this.root.scaleIn()
+	this.drillDown= function(){
+		this.root.drillDown()
 	}
-	this.zoomout =function(){
-		this.zoom-=1
-		this.root.scaleOut()
+	this.drillUp = function(){
+
 	}
 }
 
