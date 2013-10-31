@@ -12,6 +12,9 @@
 	.cursor {
 		cursor:pointer;
 	}
+	.c:after {
+		content:"asdf";
+	}
 	</style>
 	<script>
 		$(function(){
@@ -38,7 +41,13 @@
 		})
 	</script>
 	<body>
-		<div id='thefuck' style="width:100px,height:30px,border:1px solid gray"></div>
-		<canvas id = "mycanvas" width="800px" height="600px" style="margin:0 auto;display:block;border:1px solid #aeaeae"></canvas>
+		<div id='thefuck' style="width:100px,height:30px,border:1px solid gray;"></div>
+		<div id = "mycanvas_wrapper" style="position:relative;width:800px;height:600px;margin:auto">
+			<canvas id = "mycanvas" width="800px" height="600px" style="position:absolute;margin:0 auto;display:block;border:1px solid #aeaeae;z-index:1" class="c"></canvas>
+			<div style="display:none">
+				Too much hierachy, try to drag!
+			</div>
+		</div>
+		
 	</body>
 </html>

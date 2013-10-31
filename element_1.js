@@ -156,7 +156,7 @@ function Element(chart){
                     }
 
                     else{
-                        //da fuck
+                        //do da fuck
                     }
 
                 }
@@ -298,7 +298,7 @@ function Element(chart){
     }
 
 
-    this.click = function(){
+    this.click = function(x,y){
         if(this.is_open){
             this.close()
         }
@@ -411,7 +411,7 @@ function Element(chart){
 //gotcha:  the parent moves, the children all must be moved and then scaled
     this.drillDown = function(){
         this.radius  = this.radius/this.chart.radius_regression
-        
+        this.hierarchy-=1 
         this.edge = new Edge(this)
         var k = this.chart.line_regression
         this.outer_radius = this.outer_radius/k
@@ -436,6 +436,12 @@ function Element(chart){
 
     }
     this.drillUp = function(){
+        this.hierarchy+=1
+        if(this.hierarchy>2){
+            if(this.is_open){
+                this.is_open=false
+            }
+        }
         this.radius = this.radius*this.chart.radius_regression
         this.edge = new Edge(this)
         var k = this.chart.line_regression
@@ -459,5 +465,15 @@ function Element(chart){
             } 
             this.children[i].drillUp()
         }
+    }
+
+    this.get_nearest_invisible_parent = function(){
+        var e = this
+        while(e.check_bound()&&e.visible){
+            if(e.parent==null)
+                break;
+            e = e.parent
+        }
+        return e
     }
 }

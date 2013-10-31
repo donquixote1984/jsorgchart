@@ -30,6 +30,19 @@ var circle_style = {
 				shadowColor: '2e2e2e',
 				borderWidth:5
 		}
+
+var pane_style = {
+	"border":"1px solid #CCC",
+	"position":"absolute",
+	"display":"none",
+	"background":"#334455",
+	"padding":"10px",
+	"border-radius":"4px",
+	"font-size":"8pt",
+	"color":"white",
+	"transition":"",
+	"z-index":"9999"
+}
 tackle = 10
 function OrgChart(settings){
 	this.id = settings.id
@@ -73,6 +86,7 @@ function OrgChart(settings){
 
 	this.center_element = null
 	this.zoom = 0
+	this.hierarchy_exceed_info = "Too much hierachy, try to drag children node into center!"
 
 	this.init = function(){
 		Element.prototype = new RenderObject(this)
@@ -107,7 +121,7 @@ function OrgChart(settings){
 		this.context.shadowBlur = 3;
 
 		if(this.eye_hover!=null){
-			this.context.strokeStyle="#ccc"
+			this.context.strokeStyle="#369"
 			this.context.shadowColor="#333"
 			this.context.lineWidth=4
 		}
@@ -198,7 +212,7 @@ function OrgChart(settings){
 	}
 	this.on_mousedown = function(x,y){
 		var q = []
-		q.push(this.root)
+		q.push(this.center_element.get_nearest_invisible_parent())
 		while(q.length>0){
 			var e =q.shift()
 			if(e.edge!=null){
@@ -292,11 +306,16 @@ function OrgChart(settings){
 		}
 		this.remove_mousedown_element()
 		var q = []
-		q.push(this.root)
+		q.push(this.center_element.get_nearest_invisible_parent())
 		while(q.length>0){
 			var e = q.shift()
 			if(e.is_in_area(x,y)){
-				e.click()
+				if(e.hierarchy>2){
+					this.dialog(x,y)
+				}
+				else{
+					e.click()
+				}
 				break
 			}
 			if(e.is_open){
@@ -312,7 +331,7 @@ function OrgChart(settings){
 
 	this.on_hover = function(x,y){
 		var q = []
-		q.push(this.root)
+		q.push(this.center_element.get_nearest_invisible_parent())
 		var unchange = true
 		var hover_e = null
 		while(q.length>0){
@@ -369,7 +388,7 @@ function OrgChart(settings){
 	}
 	this.check_eye = function(){
 		var q = []
-		q.push(this.root)
+		q.push(this.center_element.get_nearest_invisible_parent())
 		var min_dist= 9999
 		this.eye_hover=null
 		while(q.length>0){
@@ -407,10 +426,11 @@ function OrgChart(settings){
 	}
 	this.render_elements = function(){
 		var q = []
-		q.push(this.root)
+		var root = this.center_element.get_nearest_invisible_parent()
+		q.push(root)
 		var hover_element = null
-		if(this.root.is_hovered){
-			hover_element = this.root
+		if(root.is_hovered){
+			hover_element = root
 		}
 		while(q.length>0){
 			var e =q.shift()
@@ -418,14 +438,14 @@ function OrgChart(settings){
 				for(var i =0 ;i<e.children.length;i++){
 					if(e.children[i].visible){
 						drawLine(e,e.children[i],this.context)
-						if(e.children[i].check_bound()){
+						//if(e.children[i].check_bound()){
 							if(e.children[i].is_hovered){
 								hover_element  =e.children[i]
 							}
 							//else{
 								q.push(e.children[i])
 							//}
-						}
+						//}
 						
 					}
 				}
@@ -449,10 +469,6 @@ function OrgChart(settings){
 		}
 	}
 
-	this.chroot = function(element){
-		this.root = element
-		this.element.chroot()	
-	}
 	this.translate =function(deltaX,deltaY){
 		this.translateX+=deltaX
 		this.translateY+=deltaY
@@ -467,6 +483,21 @@ function OrgChart(settings){
 	}
 	this.drillUp = function(){
 		this.root.drillUp()
+	}
+
+	this.dialog = function(x,y){
+		var e = this.canvas.next()
+		console.log("dialog")
+		e.css(pane_style)
+		e.css("left",(x+410)+"px")
+		e.css("top",(y+310)+"px")
+		e.css("opacity","1")
+		e.show()
+		e.css("transition","opacity 2.5s ease-in")
+		e.css("opacity","0")
+		setTimeout(function(){
+			e.css("z-index","0")
+		},2000)
 	}
 }
 
