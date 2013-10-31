@@ -91,13 +91,14 @@ function Element(chart){
 
     this.locate =function(index,length){
         if(this.parent ==null){
+            this.center=new Point(0,0)
             return
         }
         var angle_unit = 2*Math.PI/(length>this.page_size?this.page_size:length) 
         this.angle_unit = angle_unit
+        this.outer_radius = this.parent.outer_radius*this.chart.line_regression
         if(this.parent.parent == null){
              var _rotation_base = new Point(0,this.chart.center_length)
-             this.outer_radius = this.chart.center_length
              if(index == 0){
                 this.angle = angle_unit/2
                 this.center = _rotation_base.rotate(this.parent.center,angle_unit/2) 
@@ -109,8 +110,10 @@ function Element(chart){
         }
         else{
             var parent_dist = this.parent.center.dist(this.parent.parent.center)
-            var _rotation_base = this.parent.center.multiply(1-this.chart.line_regression)
-            this.outer_radius = this.parent.outer_radius*this.chart.line_regression
+            var _rotation_base = new Point(0,0)
+            _rotation_base.x = this.parent.center.x-(this.parent.center.x-this.parent.parent.center.x)*this.chart.line_regression
+            _rotation_base.y = this.parent.center.y-(this.parent.center.y-this.parent.parent.center.y)*this.chart.line_regression
+           
             if(index ==0){
                 this.angle= angle_unit/2
                 this.center= _rotation_base.rotate(this.parent.center,angle_unit/2)
@@ -412,20 +415,48 @@ function Element(chart){
         this.edge = new Edge(this)
         var k = this.chart.line_regression
         this.outer_radius = this.outer_radius/k
+        var base_rotation = new Point(0,0)
+        if(this.parent!=null){
+            base_rotation =  new Point(
+                        this.center.x - (this.center.x - this.parent.center.x)*this.chart.line_regression,
+                        this.center.y - (this.center.y - this.parent.center.y)*this.chart.line_regression
+                    )  
+        }
+  
         for(var i =0;i<this.children.length;i++){
-            this.children[i].center.x = this.center.x+this.outer_radius*Math.cos(this.children[i].angle+Math.PI/2)
-            this.children[i].center.y = this.center.y+this.outer_radius*Math.sin(this.children[i].angle+Math.PI/2)
+            if(this.parent == null){
+                this.children[i].center.x = this.center.x - this.outer_radius*Math.sin(this.children[i].angle)
+                this.children[i].center.y = this.center.y + this.outer_radius*Math.cos(this.children[i].angle)
+            }
+            else{
+                this.children[i].center = base_rotation.rotate(this.center,this.children[i].angle)
+            }
             this.children[i].drillDown()
         }
+
     }
     this.drillUp = function(){
         this.radius = this.radius*this.chart.radius_regression
         this.edge = new Edge(this)
         var k = this.chart.line_regression
         this.outer_radius= this.outer_radius*k
+
+        var base_rotation = new Point(0,0)
+        if(this.parent!=null){
+            base_rotation =  new Point(
+                        this.center.x - (this.center.x - this.parent.center.x)*this.chart.line_regression,
+                        this.center.y - (this.center.y - this.parent.center.y)*this.chart.line_regression
+                    )  
+        }
         for(var i = 0 ;i<this.children.length;i++){
-            this.children[i].center.x = this.center.x + this.outer_radius*Math.cos(Math.PI/2 + this.children[i].angle)
-            this.children[i].center.y = this.center.y + this.outer_radius*Math.sin(Math.PI/2 + this.children[i].angle)
+            if(this.parent==null){
+                this.children[i].center.x = this.center.x - this.outer_radius*Math.sin( this.children[i].angle)
+                this.children[i].center.y = this.center.y + this.outer_radius*Math.cos( this.children[i].angle)
+            }
+            else{
+
+                this.children[i].center = base_rotation.rotate(this.center,this.children[i].angle)
+            } 
             this.children[i].drillUp()
         }
     }

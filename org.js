@@ -84,9 +84,11 @@ function OrgChart(settings){
 			_chart.eye_element=_chart.root
 			_chart.center_element=_chart.root
 			_chart.root.visible=true
-			_chart.root.render()
+
+			//_chart.root.render()
 			_chart.root.open()
 			_chart.init_event()
+			//_chart.render()
 		})
 		
 	}
@@ -270,11 +272,9 @@ function OrgChart(settings){
 		if(this.eye_hover == this.center_element){
 		}
 		else if(this.eye_hover.hierarchy<this.center_element.hierarchy){
-			console.log("drillup")
 			this.drillUp()
 		}
 		else if(this.eye_hover.hierarchy>this.center_element.hierarchy){
-			console.log("drilldown")
 			this.drillDown()
 		}
 		var deltaX =  - this.eye_hover.center.x
