@@ -13,11 +13,11 @@ function Element(chart){
    	this.page = 0
     this.angle = 0
     this.angle_unit = 0
-
+    this.outer_radius = 0
     this.edge=null
     this.bloom_time = 1
     this.disable = false
-
+    this.outer_radius = this.chart.center_length
     this.dragged = false
     this.mouse_down_position = new Point(0,0)
 
@@ -86,7 +86,6 @@ function Element(chart){
             else{
                 this.children[i].visible = false
             }
-            
         }
     }
 
@@ -262,7 +261,7 @@ function Element(chart){
     }
 
     this.add_children = function(data){
-        var e = new Element()
+        var e = new Element(this.chart)
         e.init(data)
         e.hierarchy = this.hierarchy+1
         e.parent = this
@@ -406,17 +405,28 @@ function Element(chart){
         }
         return -1
     }
-
+//gotcha:  the parent moves, the children all must be moved and then scaled
     this.drillDown = function(){
         this.radius  = this.radius/this.chart.radius_regression
+        
+        this.edge = new Edge(this)
         var k = this.chart.line_regression
-        if(this.parent!=null){
-            this.center.x = this.parent.center.x+(this.center.x-this.parent.center.x)/k
-            this.center.y = this.parent.center.y+(this.center.y-this.parent.center.y)/k
-            console.log("center:"+this.center.x+" "+this.center.y)
-        }
+        this.outer_radius = this.outer_radius/k
         for(var i =0;i<this.children.length;i++){
+            this.children[i].center.x = this.center.x+this.outer_radius*Math.cos(this.children[i].angle+Math.PI/2)
+            this.children[i].center.y = this.center.y+this.outer_radius*Math.sin(this.children[i].angle+Math.PI/2)
             this.children[i].drillDown()
+        }
+    }
+    this.drillUp = function(){
+        this.radius = this.radius*this.chart.radius_regression
+        this.edge = new Edge(this)
+        var k = this.chart.line_regression
+        this.outer_radius= this.outer_radius*k
+        for(var i = 0 ;i<this.children.length;i++){
+            this.children[i].center.x = this.center.x + this.outer_radius*Math.cos(Math.PI/2 + this.children[i].angle)
+            this.children[i].center.y = this.center.y + this.outer_radius*Math.sin(Math.PI/2 + this.children[i].angle)
+            this.children[i].drillUp()
         }
     }
 }

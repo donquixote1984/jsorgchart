@@ -268,7 +268,6 @@ function OrgChart(settings){
 		}
 
 		if(this.eye_hover == this.center_element){
-			this.drillDown()
 		}
 		else if(this.eye_hover.hierarchy<this.center_element.hierarchy){
 			console.log("drillup")
@@ -417,14 +416,17 @@ function OrgChart(settings){
 			var e =q.shift()
 			if(e.is_open){
 				for(var i =0 ;i<e.children.length;i++){
-					if(e.children[i].visible&&e.children[i].check_bound()){
+					if(e.children[i].visible){
 						drawLine(e,e.children[i],this.context)
-						if(e.children[i].is_hovered){
-							hover_element  =e.children[i]
+						if(e.children[i].check_bound()){
+							if(e.children[i].is_hovered){
+								hover_element  =e.children[i]
+							}
+							//else{
+								q.push(e.children[i])
+							//}
 						}
-						else{
-							q.push(e.children[i])
-						}
+						
 					}
 				}
 			}
@@ -458,10 +460,13 @@ function OrgChart(settings){
 
 	}
 	this.drillDown= function(){
+		/*for(var i =0;i<this.root.children.length;i++){
+			this.root.children[i].drillDown()
+		}*/
 		this.root.drillDown()
 	}
 	this.drillUp = function(){
-
+		this.root.drillUp()
 	}
 }
 
