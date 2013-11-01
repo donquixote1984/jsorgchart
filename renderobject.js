@@ -5,8 +5,10 @@ function RenderObject(chart){
 	this.timer = null
 	this.is_hovered= false
 	this.mouse_down=false
-
-	this.check_hover = function(){}
+	this.disable = false
+	this.check_hover = function(){
+		return null
+	}
 	this.check_mousedown = function(){}
 	this.check_mouseup = function(){}
 	this.check_drag = function(){}
@@ -14,4 +16,6 @@ function RenderObject(chart){
 	this.check_bound = function(){}
 	this.mark_hover = function(){}
 	this.toString = function(){return "RenderObject"}
+	this.click = function(){}
+	this.mousedown = function(){}
 }

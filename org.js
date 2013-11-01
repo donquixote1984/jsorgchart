@@ -5,6 +5,9 @@ function drawLine(from,to,context){
     context.save()
     context.beginPath()
     //context.globalCompositeOperation="destination-over"
+    if(from.is_disable){
+    	context.globalAlpha=0.5
+    }
     context.moveTo(to.center.x,to.center.y)
     context.lineTo(from.center.x,from.center.y)
     if(from.is_hovered){
@@ -286,10 +289,23 @@ function OrgChart(settings){
 		if(this.eye_hover == this.center_element){
 		}
 		else if(this.eye_hover.hierarchy<this.center_element.hierarchy){
-			this.drillUp()
+			var e = this.eye_hover
+			do{
+				this.drillUp()
+				e.disable_up()
+				e =e.parent
+			}
+			while(e!=this.center_element)
 		}
 		else if(this.eye_hover.hierarchy>this.center_element.hierarchy){
-			this.drillDown()
+			
+			var e = this.eye_hover
+			do{
+				this.drillDown()
+				e.disable_up()
+				e = e.parent
+			}
+			while(e!=this.center_element)
 		}
 		var deltaX =  - this.eye_hover.center.x
 		var deltaY =  - this.eye_hover.center.y

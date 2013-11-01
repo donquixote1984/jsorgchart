@@ -4,6 +4,8 @@ function Edge(element){
     this.element = element
     this.right=false
     this.left= false
+    this.bak_mousedown= null
+
     this.render= function(center){
         var _center = center
         if(_center == null){
@@ -12,7 +14,14 @@ function Edge(element){
         var context= this.element.chart.context
         context.save()
         context.beginPath()
+        context.fillStyle = "#fff"
+        context.arc(_center.x,_center.y,this.radius,0,2*Math.PI,true)
+        context.fill()
+
         context.fillStyle = "#336699"
+        if(this.element.is_disable){
+          context.globalAlpha = 0.3
+        }
         context.arc(_center.x,_center.y,this.radius,0,2*Math.PI,true)
         context.fill()
         context.closePath()
@@ -23,6 +32,9 @@ function Edge(element){
        context.save()
        context.beginPath()
        context.fillStyle="#336699"
+       if(this.element.is_disable){
+        context.globalAlpha = 0.3
+       }
        context.arc(this.center.x,this.center.y,this.radius,Math.PI/2,3*Math.PI/2,false)
        context.fill()
        context.closePath()
@@ -38,6 +50,9 @@ function Edge(element){
        context.save()
        context.beginPath()
        context.fillStyle="#775588"
+       if(this.element.is_disable){
+        context.globalAlpha = 0.3
+       }
        context.arc(this.center.x,this.center.y,this.radius,Math.PI/2,3*Math.PI/2,false)
        context.fill()
        context.closePath()

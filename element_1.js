@@ -16,11 +16,13 @@ function Element(chart){
     this.outer_radius = 0
     this.edge=null
     this.bloom_time = 1
-    this.disable = false
+    this.is_disable = false
     this.outer_radius = this.chart.center_length
     this.dragged = false
     this.mouse_down_position = new Point(0,0)
 
+    this.bak_click = null 
+    this.bak_check_hover = null
    	this.init = function(data){
    		this.text= data.text
    		this.image.src = "static/huaban.com/"+data.image
@@ -241,9 +243,15 @@ function Element(chart){
         var context=this.chart.context
         context.save()
         context.beginPath()
+        context.fillStyle="#fff"
+        context.arc(_center.x,_center.y,this.radius,0,2*Math.PI,true)
+        context.fill()
         context.arc(_center.x,_center.y,this.radius,0,2*Math.PI,true)
         var gra = context.createRadialGradient(_center.x, _center.y,this.radius-circle_style.borderWidth,_center.x,_center.y,this.radius)
         gra.addColorStop(0,circle_style.gra_start)
+        if(this.is_disable){
+            context.globalAlpha=0.2
+        }
         if(this.is_hovered){
             gra.addColorStop(1,circle_style.gra_hover_stop)
             context.globalCompositeOperation="source-over"
@@ -476,4 +484,45 @@ function Element(chart){
         }
         return e
     }
+
+    this.disable = function(){
+        this.is_disable = true
+        this.bak_click = this.click
+        this.click =    Element.prototype.click
+        if(this.edge!=null){
+            this.edge.bak_mousedown = this.edge.mousedown
+            this.edge.mousedown = Edge.prototype.mousedown
+        }
+
+        //for(var i =0;i<this.children.length;i++){
+        //    this.children[i].disable()
+        //}
+    }
+    this.disable_hover = function(){
+        this.bak_check_hover = this.check_hover
+        this.check_hover = Element.prototype.check_hover
+    }
+    this.enable = function(){
+        this.click = this.bak_click
+        this.is_disable = false
+        for(var i =0;i<this.children.length;i++){
+            this.children[i].enable()
+        }
+    }
+
+    this.disable_up = function(){
+        if(this.parent!=null){
+            this.parent.disable()
+            if(this.parent.is_open){
+                for(var i = 0 ;i<this.parent.children.length;i++){
+                   if(this.parent.children[i]!=this) {
+                        this.parent.children[i].disable()
+                        this.parent.children[i].disable_hover()
+                   }
+                }  
+            }
+
+        }
+    }
+    
 }
