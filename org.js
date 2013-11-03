@@ -289,16 +289,19 @@ function OrgChart(settings){
 		if(this.eye_hover == this.center_element){
 		}
 		else if(this.eye_hover.hierarchy<this.center_element.hierarchy){
-			var e = this.eye_hover
-			do{
+			var e = this.center_element.parent
+			while(true){
 				this.drillUp()
-				e.disable_up()
-				e =e.parent
+				e.enable()
+				if(e==this.eye_hover||e.hierarchy<this.eye_hover.hierarchy){
+					break;
+				}
+				else{
+					e = e.parent
+				}
 			}
-			while(e!=this.center_element)
 		}
 		else if(this.eye_hover.hierarchy>this.center_element.hierarchy){
-			
 			var e = this.eye_hover
 			do{
 				this.drillDown()
@@ -306,6 +309,10 @@ function OrgChart(settings){
 				e = e.parent
 			}
 			while(e!=this.center_element)
+		}
+		else if(this.eye_hover.hierarchy==this.center_element.hierarchy){
+			this.eye_hover.enable()
+			this.center_element.disable_cascade()
 		}
 		var deltaX =  - this.eye_hover.center.x
 		var deltaY =  - this.eye_hover.center.y
@@ -326,6 +333,9 @@ function OrgChart(settings){
 		while(q.length>0){
 			var e = q.shift()
 			if(e.is_in_area(x,y)){
+				if(e.is_disable){
+					break
+				}
 				if(e.hierarchy>2){
 					this.dialog(x,y)
 				}
@@ -336,7 +346,7 @@ function OrgChart(settings){
 			}
 			if(e.is_open){
 				for(var i =0;i<e.children.length;i++){
-					if(e.children[i].check_bound()&&e.children[i].visible){
+					if(e.children[i].visible){
 						q.push(e.children[i])
 					}
 				}
@@ -359,6 +369,10 @@ function OrgChart(settings){
 			}
 			var check_hover_element = e.check_hover(x,y)
 			if(check_hover_element!=null){
+				// for the multiple hover. choose the top one. and disable the previous one.
+				if(hover_e!=null){
+					hover_e.unhover()
+				}
 				hover_e = check_hover_element
 			}
 		}
@@ -442,47 +456,68 @@ function OrgChart(settings){
 	}
 	this.render_elements = function(){
 		var q = []
+		var hover_q = []
+		var disable_q = []
+		var enable_q = []
 		var root = this.center_element.get_nearest_invisible_parent()
-		q.push(root)
 		var hover_element = null
-		if(root.is_hovered){
-			hover_element = root
-		}
+		q.push(root)
 		while(q.length>0){
-			var e =q.shift()
+			var e = q.shift()
 			if(e.is_open){
-				for(var i =0 ;i<e.children.length;i++){
+				for(var i = 0 ;i<e.children.length;i++){
 					if(e.children[i].visible){
-						drawLine(e,e.children[i],this.context)
-						//if(e.children[i].check_bound()){
-							if(e.children[i].is_hovered){
-								hover_element  =e.children[i]
-							}
-							//else{
-								q.push(e.children[i])
-							//}
-						//}
-						
+						q.push(e.children[i])
 					}
 				}
 			}
-			if(e.is_hovered==false){
-				e.render()
+			if(e.is_hovered){
+				hover_element = e
+			}
+			else{
+				if(e.is_disable){
+					disable_q.push(e)
+				}	
+				else{
+					enable_q.push(e)
+				}
 			}
 		}
 
-		if(hover_element!=null){
-				
-				if(hover_element.is_open){
-					for(var i =0 ;i<hover_element.children.length;i++){
-						if(hover_element.children[i].visible&&hover_element.children[i].check_bound()){
-							drawLine(hover_element,hover_element.children[i],this.context)
-							hover_element.children[i].render()
-						}
+		for(var i =0 ;i<disable_q.length;i++){
+			var dis_e= disable_q[i]
+			if(dis_e.is_open){
+				for(var j =0;j<dis_e.children.length;j++){
+					if(dis_e.children[j].visible){
+						drawLine(dis_e,dis_e.children[j],this.context)
 					}
 				}
-				hover_element.render()		
+			}
+			dis_e.render()
 		}
+
+		for(var i =0;i<enable_q.length;i++){
+			var en_e = enable_q[i]
+			if(en_e.is_open){
+				for(var j=0;j<en_e.children.length;j++){
+					if(en_e.children[j].visible){
+						drawLine(en_e,en_e.children[j],this.context)
+					}
+				}
+			}
+			en_e.render()
+		}
+		if(hover_element!=null){
+                if(hover_element.is_open){
+                    for(var i =0 ;i<hover_element.children.length;i++){
+                        if(hover_element.children[i].visible){
+                            drawLine(hover_element,hover_element.children[i],this.context)
+                            hover_element.children[i].render()
+                        }
+                    }
+                }
+                hover_element.render()      
+        }
 	}
 
 	this.translate =function(deltaX,deltaY){

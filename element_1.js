@@ -20,9 +20,7 @@ function Element(chart){
     this.outer_radius = this.chart.center_length
     this.dragged = false
     this.mouse_down_position = new Point(0,0)
-
-    this.bak_click = null 
-    this.bak_check_hover = null
+    this.zindex = 0
    	this.init = function(data){
    		this.text= data.text
    		this.image.src = "static/huaban.com/"+data.image
@@ -41,20 +39,19 @@ function Element(chart){
                     e.locate(index,data.length)
                 })
                 if(_this.children.length>_this.page_size){
-                    // add edge
-                    //_this.edge()
-                    _this.is_edged = true
                     _this.edge = new Edge(_this)
                 }
                 _this.init_children_visage()
-                //_this.render_children()
-                //_this.close()
                 _this.bloom()
             })
         }
         else{ //da fuck
+            if(_this.children.length>_this.page_size){
+                _this.edge = new Edge(_this)
+            }
             _this.bloom()
         }
+
     }
 
     this.init_children_visage = function(){
@@ -133,6 +130,7 @@ function Element(chart){
         }
 
         var _this = this
+        this.edge = null
         var t_step = 0.1/_this.bloom_time
         var t =0
         var max_walk = _this.chart.bezier.get(_this.bloom_time)
@@ -158,7 +156,6 @@ function Element(chart){
                     }
 
                     else{
-                        //do da fuck
                     }
 
                 }
@@ -229,7 +226,7 @@ function Element(chart){
         if(this.check_bound()==false){
             return
         }
-        if(this.is_edged){
+        if(this.edge!=null){
             if(this.edge.right){
                 this.edge.hover_right()
             }
@@ -289,6 +286,10 @@ function Element(chart){
     }
 
     this.check_hover = function(x,y){
+        if(this.is_disable){
+            this.unhover()
+            return null
+        }
     	var hover_element = null
     	if(this.edge!=null){
     		if(this.edge.check_hover(x,y)){
@@ -307,6 +308,9 @@ function Element(chart){
 
 
     this.click = function(x,y){
+        if(this.is_disable){
+            return
+        }
         if(this.is_open){
             this.close()
         }
@@ -420,7 +424,9 @@ function Element(chart){
     this.drillDown = function(){
         this.radius  = this.radius/this.chart.radius_regression
         this.hierarchy-=1 
-        this.edge = new Edge(this)
+        if(this.edge!=null){
+            this.edge = new Edge(this)
+        }
         var k = this.chart.line_regression
         this.outer_radius = this.outer_radius/k
         var base_rotation = new Point(0,0)
@@ -451,7 +457,9 @@ function Element(chart){
             }
         }
         this.radius = this.radius*this.chart.radius_regression
-        this.edge = new Edge(this)
+        if(this.edge !=null){
+            this.edge = new Edge(this)
+        }
         var k = this.chart.line_regression
         this.outer_radius= this.outer_radius*k
 
@@ -482,42 +490,42 @@ function Element(chart){
                 break;
             e = e.parent
         }
-        return e
+        if(e.parent==null){
+            return e
+        }
+        else{
+            return e.parent
+        }
     }
 
     this.disable = function(){
         this.is_disable = true
-        this.bak_click = this.click
-        this.click =    Element.prototype.click
         if(this.edge!=null){
             this.edge.bak_mousedown = this.edge.mousedown
             this.edge.mousedown = Edge.prototype.mousedown
         }
-
-        //for(var i =0;i<this.children.length;i++){
-        //    this.children[i].disable()
-        //}
-    }
-    this.disable_hover = function(){
-        this.bak_check_hover = this.check_hover
-        this.check_hover = Element.prototype.check_hover
     }
     this.enable = function(){
-        this.click = this.bak_click
         this.is_disable = false
         for(var i =0;i<this.children.length;i++){
             this.children[i].enable()
         }
     }
-
+    this.disable_cascade = function(){
+        this.disable()
+        if(this.is_open){
+            for(var i=0;i<this.children.length;i++){
+                this.children[i].disable()
+            }
+        }
+    }
     this.disable_up = function(){
         if(this.parent!=null){
             this.parent.disable()
             if(this.parent.is_open){
                 for(var i = 0 ;i<this.parent.children.length;i++){
                    if(this.parent.children[i]!=this) {
-                        this.parent.children[i].disable()
-                        this.parent.children[i].disable_hover()
+                        this.parent.children[i].disable_cascade()
                    }
                 }  
             }

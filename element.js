@@ -688,3 +688,37 @@ function Element(data,chart){
         return eye_node
     }
 }
+
+
+        if(root.is_hovered){
+            hover_element = root
+        }
+        while(q.length>0){
+            var e =q.shift()
+            if(e.is_open){
+                for(var i =0 ;i<e.children.length;i++){
+                    if(e.children[i].visible){
+                            drawLine(e,e.children[i],this.context)
+                            if(e.children[i].is_hovered){
+                                hover_element  =e.children[i]
+                            }
+                            q.push(e.children[i])
+                        }
+                    }
+            }
+            if(e.is_hovered==false){
+                e.render()
+            }
+        }
+
+        if(hover_element!=null){
+                if(hover_element.is_open){
+                    for(var i =0 ;i<hover_element.children.length;i++){
+                        if(hover_element.children[i].visible&&hover_element.children[i].check_bound()){
+                            drawLine(hover_element,hover_element.children[i],this.context)
+                            hover_element.children[i].render()
+                        }
+                    }
+                }
+                hover_element.render()      
+        }

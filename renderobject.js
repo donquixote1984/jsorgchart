@@ -18,4 +18,5 @@ function RenderObject(chart){
 	this.toString = function(){return "RenderObject"}
 	this.click = function(){}
 	this.mousedown = function(){}
+	this.unhover  =function(){}
 }
