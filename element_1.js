@@ -21,6 +21,7 @@ function Element(chart){
     this.dragged = false
     this.mouse_down_position = new Point(0,0)
     this.zindex = 0
+    this.center=new Point(0,0)
    	this.init = function(data){
    		this.text= data.text
    		this.image.src = "static/huaban.com/"+data.image

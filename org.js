@@ -50,6 +50,7 @@ tackle = 10
 function OrgChart(settings){
 	this.id = settings.id
 	this.canvas = $("#"+this.id)
+	this.controls = $("#jsorg_controls")
 	this.context = settings.context
 	this.width = settings.width
 	this.height=settings.height
@@ -88,7 +89,6 @@ function OrgChart(settings){
 	this.adapt_time = 1
 
 	this.center_element = null
-	this.zoom = 0
 	this.hierarchy_exceed_info = "Too much hierachy, try to drag children node into center!"
 
 	this.init = function(){
@@ -159,6 +159,7 @@ function OrgChart(settings){
 		this.init_click()
 		this.init_mousedown()
 		this.init_mouseup()
+		this.init_controls()
 		//this.init_dblclick()
 	}
 	this.init_click = function(){
@@ -213,6 +214,18 @@ function OrgChart(settings){
 			 }
 		})
 	}
+	this.init_controls = function(){
+		var _this =this
+		this.controls.find("#control-left").click(function(){
+
+		})
+		this.controls.find("#control-right").click(function(){
+
+		})
+		this.controls.find("#control-repeat").click(function(){
+			_this.on_origin()
+		})
+	}
 	this.on_mousedown = function(x,y){
 		var q = []
 		q.push(this.center_element.get_nearest_invisible_parent())
@@ -231,7 +244,7 @@ function OrgChart(settings){
 			}
 			if(e.is_open){
 				for(var i = 0;i<e.children.length;i++){
-					if(e.children[i].visible&&e.children[i].check_bound()){
+					if(e.children[i].visible){
 						q.push(e.children[i])
 					}
 				}
@@ -363,7 +376,7 @@ function OrgChart(settings){
 		while(q.length>0){
 			var e = q.shift()
 			for(var i =0;i<e.children.length;i++){
-				if(e.children[i].check_bound()&&e.children[i].visible){
+				if(e.children[i].visible){
 					q.push(e.children[i])
 				}
 			}
@@ -432,7 +445,7 @@ function OrgChart(settings){
 			}
 			if(e.is_open){
 				for(var i = 0;i<e.children.length;i++){
-					if(e.children[i].check_bound()&&e.children[i].visible){
+					if(e.children[i].visible){
 						q.push(e.children[i])
 					}
 				}
@@ -549,6 +562,11 @@ function OrgChart(settings){
 		setTimeout(function(){
 			e.css("z-index","0")
 		},2000)
+	}
+
+
+	this.on_origin = function(){
+			
 	}
 }
 

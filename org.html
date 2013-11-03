@@ -12,8 +12,40 @@
 	.cursor {
 		cursor:pointer;
 	}
-	.c:after {
-		content:"asdf";
+	.icon {
+		background-image:url('http://cdn.bootcss.com/twitter-bootstrap/2.3.2/img/glyphicons-halflings-white.png');
+		height:14px;
+		width:14px;
+	}
+	.icon-repeat {
+		background-position:-216px -24px;
+	}
+	.icon-left {
+		background-position: -432px -72px;
+	}
+	.icon-right {
+		background-position: -456px -72px;
+	}
+	.controls {
+		height:20px;
+		width:100%;
+		background: #369
+	}
+	.controls ul{
+		float:right;
+		margin:0;
+		padding:1px;
+	}
+	.controls ul li {
+		list-style: none;
+		float:left;
+		cursor:pointer;
+		margin-left:3px;
+		border:1px solid #369;
+	}
+	.controls ul li:hover {
+		border:1px solid white;
+		border-radius: 8px;
 	}
 	</style>
 	<script>
@@ -42,8 +74,21 @@
 	</script>
 	<body>
 		<div id='thefuck' style="width:100px,height:30px,border:1px solid gray;"></div>
-		<div id = "mycanvas_wrapper" style="position:relative;width:800px;height:600px;margin:auto">
-			<canvas id = "mycanvas" width="800px" height="600px" style="position:absolute;margin:0 auto;display:block;border:1px solid #aeaeae;z-index:1" class="c"></canvas>
+		<div id = "mycanvas_wrapper" style="position:relative;width:800px;height:600px;margin:auto;border:1px solid gray">
+			<div id="jsorg_controls" class="controls">
+				<ul>
+					<li>
+						<div id ="control-left" class="icon icon-left"></div>
+					</li>
+					<li>
+						<div id="control-right" class="icon icon-right"></div>
+					</li>
+					<li>
+						<div id="control-repeat" class="icon icon-repeat"></div>
+					</li>
+				</ul>
+			</div>
+			<canvas id = "mycanvas" width="800px" height="600px" style="position:absolute;margin:0 auto;display:block;z-index:1" class="c"></canvas>
 			<div style="display:none">
 				Too much hierachy, try to drag!
 			</div>
